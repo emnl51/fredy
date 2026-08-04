@@ -2,7 +2,9 @@
  * Copyright (c) 2026 by Christian Kellner.
  * Licensed under Apache-2.0 with Commons Clause and Attribution/Naming Clause
  */
-
+import {
+  getTravelTimeMarkerColor,
+} from '../../components/transit/travelTimeFilter';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUrlState, parseNumber, parseString, parseBoolean } from '../../hooks/useSearchParamState.js';
 import { getAddresses } from '../../utils.js';
