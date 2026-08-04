@@ -1,8 +1,23 @@
-/**
+/*
  * Travel time filter helpers.
  *
  * Keeps map/list filtering logic in one place.
  */
+
+export const TRAVEL_MODES = {
+  TRANSIT: 'transit',
+  CAR: 'car',
+};
+
+
+export function createTravelTimeFilter(mode = TRAVEL_MODES.TRANSIT, maxMinutes = 45) {
+  return {
+    enabled: true,
+    mode,
+    maxMinutes,
+  };
+}
+
 
 /**
  * Returns available travel time in minutes for a selected mode.
