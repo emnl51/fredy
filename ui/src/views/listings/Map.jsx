@@ -413,6 +413,33 @@ export default function MapView() {
         }
       }
 
+
+      let color = '#3FB1CE';
+
+        const travelColor = getTravelTimeMarkerColor(
+        grouped[0],
+        travelTimeFilter,
+          );
+
+            if (travelColor) {
+              color = travelColor;
+          }      
+            else if (distanceFilter > 0 && homeAddresses.length > 0) {
+              const inRange = homeAddresses.some(
+                (home) =>
+                  distanceMeters(
+                    home.coords.lat,
+                    home.coords.lng,
+                    lat,
+                    lng,
+                    ) <= distanceFilter * 1000,
+      );
+    
+     if (inRange) {
+          color = 'orange';
+          }
+      }
+      
       const marker = new maplibregl.Marker({ color }).setLngLat([lng, lat]).setPopup(popup).addTo(map.current);
 
       if (grouped.length > 1) {
