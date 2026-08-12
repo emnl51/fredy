@@ -16,10 +16,7 @@ export default function useTravelTimeFilter(initial = {}) {
     ...initial,
   });
 
-  const active = useMemo(
-    () => filter.enabled && filter.maxMinutes > 0,
-    [filter],
-  );
+  const active = useMemo(() => filter.enabled && filter.maxMinutes > 0, [filter]);
 
   return {
     filter,
