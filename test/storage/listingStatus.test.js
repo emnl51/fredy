@@ -73,6 +73,17 @@ describe('listingsStorage.setListingStatus', () => {
     expect(JSON.parse(calls.execute.at(-1).params.status).status).toBe(status);
   });
 
+  it('preserves the viewing appointment when invited is selected again', () => {
+    sqliteMock.__queryHandler = () => [
+      { status: JSON.stringify({ status: 'invited', setAt: 10, appointmentAt: 1893456000000 }) },
+    ];
+    listingsStorage.setListingStatus('listing-1', 'invited');
+
+    expect(JSON.parse(calls.execute.at(-1).params.status)).toEqual(
+      expect.objectContaining({ status: 'invited', appointmentAt: 1893456000000 }),
+    );
+  });
+
   it('accepts null to clear the status (no JSON wrapping)', () => {
     listingsStorage.setListingStatus('listing-2', null);
     expect(calls.execute[0].params).toEqual({ id: 'listing-2', status: null });

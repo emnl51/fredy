@@ -10,6 +10,7 @@ import {
   IconSetting,
   IconTerminal,
   IconHistogram,
+  IconCalendarClock,
   IconMailStroked,
   IconSidebar,
   IconServerStroked,
@@ -59,6 +60,7 @@ export default function Navigation({ isAdmin }) {
     },
     { itemKey: '/finance', text: t('nav.finance'), icon: <IconEuro /> },
     { itemKey: '/mail', text: t('nav.mail'), icon: <IconMailStroked /> },
+    { itemKey: '/invitations', text: t('nav.invitations'), icon: <IconCalendarClock /> },
   ];
 
   // Two groups, not one. Which group a page sits in is the answer to "does this affect anyone but

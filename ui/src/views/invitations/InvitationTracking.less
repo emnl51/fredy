@@ -1,0 +1,112 @@
+@import '../../tokens.less';
+
+.invitationTracking {
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+
+  &__loading {
+    min-height: 360px;
+    display: grid;
+    place-items: center;
+  }
+
+  &__list {
+    display: grid;
+    gap: @space-4;
+  }
+
+  &__card {
+    overflow: hidden;
+  }
+
+  &__listing {
+    display: grid;
+    grid-template-columns: minmax(180px, 260px) 1fr;
+  }
+
+  &__listing > img {
+    width: 100%;
+    height: 100%;
+    min-height: 220px;
+    object-fit: cover;
+  }
+
+  &__listingBody,
+  &__mails {
+    padding: @space-4;
+  }
+
+  &__heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: @space-3;
+  }
+
+  &__heading h4 {
+    margin: @space-2 0 @space-1;
+  }
+
+  &__appointment {
+    display: grid;
+    grid-template-columns: minmax(220px, 320px) auto auto;
+    align-items: end;
+    gap: @space-2;
+    margin-top: @space-4;
+  }
+
+  &__appointment label {
+    grid-column: 1 / -1;
+    font-weight: 600;
+  }
+
+  &__mails {
+    border-top: 1px solid @color-border;
+    background: @color-fill-subtle;
+  }
+
+  &__mails h5 {
+    margin: 0 0 @space-2;
+  }
+
+  &__mail {
+    padding: @space-2 0;
+    border-top: 1px solid @color-border;
+  }
+
+  &__mail summary {
+    display: flex;
+    justify-content: space-between;
+    gap: @space-2;
+    cursor: pointer;
+    font-weight: 600;
+  }
+
+  &__mail pre {
+    max-height: 260px;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    font: inherit;
+  }
+
+  @media (max-width: 800px) {
+    &__listing {
+      grid-template-columns: 1fr;
+    }
+
+    &__listing > img {
+      max-height: 240px;
+    }
+
+    &__heading,
+    &__mail summary {
+      flex-direction: column;
+    }
+
+    &__appointment {
+      grid-template-columns: 1fr;
+    }
+  }
+}

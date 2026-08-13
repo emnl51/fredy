@@ -6,6 +6,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   extractListingCodes,
+  extractAddressVariants,
   matchUnmatchedMailMessages,
   normalizeMailMatchText,
   normalizeMatchableAddress,
@@ -19,8 +20,20 @@ describe('mailListingMatcher normalization', () => {
   });
 
   it('requires a street-level address with a house number', () => {
-    expect(normalizeMatchableAddress('Goethestraße 18, 10625 Berlin')).toBe('goethestrasse 18 10625 berlin');
+    expect(normalizeMatchableAddress('Goethestraße 18, 10625 Berlin')).toBe('goethe str 18 10625 berlin');
     expect(normalizeMatchableAddress('10625 Berlin')).toBeNull();
+  });
+
+  it('normalizes common German street and house-number spelling variants', () => {
+    expect(extractAddressVariants('Goethestraße 18 a, 10625 Berlin')).toEqual([
+      'goethe str 18a 10625 berlin',
+      'goethe str 18a',
+    ]);
+    expect(extractListingCodes('https://example.com/search?object_id=AB-12345#offer-998877')).toEqual([
+      'ab12345',
+      '998877',
+      'offer998877',
+    ]);
   });
 });
 
@@ -81,6 +94,19 @@ describe('matchUnmatchedMailMessages', () => {
     );
   });
 
+  it('matches a labeled reference whose digits are visually grouped', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      messages: [{ id: 'formatted-reference', subject: 'Objekt-Nr.: 123 456 789', textBody: null }],
+      listings,
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'formatted-reference', listingId: 'listing-1', method: 'listing_code' }),
+    );
+  });
+
   it('uses an exact normalized address when no listing code is present', async () => {
     const assign = vi.fn(() => true);
     await matchUnmatchedMailMessages('user-1', {
@@ -90,6 +116,86 @@ describe('matchUnmatchedMailMessages', () => {
     });
 
     expect(assign).toHaveBeenCalledWith(expect.objectContaining({ listingId: 'listing-1', method: 'address' }));
+  });
+
+  it('matches a unique street and house number when postcode and city are omitted', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      messages: [{ id: 'short-address', subject: 'Termin in der Goethestr. 18', textBody: null }],
+      listings,
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(expect.objectContaining({ listingId: 'listing-1', method: 'address' }));
+  });
+
+  it('keeps a shared street and house number ambiguous without another signal', async () => {
+    const assign = vi.fn(() => true);
+    const result = await matchUnmatchedMailMessages('user-1', {
+      messages: [{ id: 'shared-address', subject: 'Termin Goethestrasse 18', textBody: null }],
+      listings: [listings[0], { ...listings[0], id: 'listing-other-city', address: 'Goethestraße 18, 04109 Leipzig' }],
+      assign,
+    });
+
+    expect(assign).not.toHaveBeenCalled();
+    expect(result.ambiguous).toBe(1);
+  });
+
+  it('uses the sender portal to disambiguate duplicate portal identifiers', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      messages: [
+        {
+          id: 'portal-code',
+          senderAddress: 'service@immobilienscout24.de',
+          subject: 'Objektnummer 123456789',
+          textBody: null,
+        },
+      ],
+      listings: [listings[0], { ...listings[0], id: 'other-portal', link: 'https://example.org/expose/123456789' }],
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(expect.objectContaining({ listingId: 'listing-1' }));
+  });
+
+  it('uses an explicit provider name to narrow otherwise duplicate identifiers', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      messages: [{ id: 'provider-code', subject: 'WG-Gesucht Anfrage 123456789', textBody: null }],
+      listings: [
+        { ...listings[0], provider: 'ImmobilienScout24' },
+        {
+          ...listings[0],
+          id: 'wg-duplicate',
+          provider: 'WG Gesucht',
+          link: 'https://www.wg-gesucht.de/123456789.html',
+        },
+      ],
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(expect.objectContaining({ listingId: 'wg-duplicate' }));
+  });
+
+  it('uses a distinctive full title only as an ambiguity tie-breaker', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      messages: [
+        {
+          id: 'title-code',
+          subject: '123456789 – Helle Altbauwohnung am Viktoriapark',
+          textBody: null,
+        },
+      ],
+      listings: [
+        { ...listings[0], title: 'Ruhiges Apartment am Lietzensee' },
+        { ...listings[0], id: 'title-match', title: 'Helle Altbauwohnung am Viktoriapark' },
+      ],
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(expect.objectContaining({ listingId: 'title-match' }));
   });
 
   it('inherits a listing match through a German email thread', async () => {
@@ -119,6 +225,68 @@ describe('matchUnmatchedMailMessages', () => {
       expect.objectContaining({ messageId: 'reply-1', listingId: 'listing-1', method: 'thread', confidence: 95 }),
     );
     expect(result).toEqual({ processed: 2, matched: 2, ambiguous: 0 });
+  });
+
+  it('normalizes brackets and casing in email thread identifiers', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      anchors: [{ messageId: '<Application-Case@Example.COM>', listingId: 'listing-1' }],
+      messages: [
+        {
+          id: 'case-reply',
+          messageId: '<case-reply@example.com>',
+          inReplyTo: 'application-case@example.com',
+          references: [],
+          subject: 'AW: Ihre Anfrage',
+          textBody: null,
+        },
+      ],
+      listings,
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(
+      expect.objectContaining({ messageId: 'case-reply', listingId: 'listing-1', method: 'thread' }),
+    );
+  });
+
+  it('accepts a whitespace-separated References header from an injected source', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      anchors: [{ messageId: '<root@example.com>', listingId: 'listing-1' }],
+      messages: [
+        {
+          id: 'string-references',
+          messageId: '<reply@example.com>',
+          references: '<unrelated@example.com> <ROOT@example.com>',
+          subject: 'AW: Termin',
+        },
+      ],
+      listings,
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(expect.objectContaining({ listingId: 'listing-1', method: 'thread' }));
+  });
+
+  it('leaves a message unresolved when direct evidence contradicts its established thread', async () => {
+    const assign = vi.fn(() => true);
+    const result = await matchUnmatchedMailMessages('user-1', {
+      anchors: [{ messageId: '<root@example.com>', listingId: 'listing-1' }],
+      messages: [
+        {
+          id: 'conflicting-reply',
+          inReplyTo: '<root@example.com>',
+          references: [],
+          subject: 'Objektnummer 9876543',
+        },
+      ],
+      listings,
+      assign,
+    });
+
+    expect(assign).not.toHaveBeenCalled();
+    expect(result).toEqual({ processed: 1, matched: 0, ambiguous: 1 });
   });
 
   it('leaves duplicate identifiers unmatched for manual selection', async () => {

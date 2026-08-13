@@ -14,6 +14,9 @@ export const testMailAccount = () => xhrPost('/api/mail/account/test').then(json
 export const syncMail = () => xhrPost('/api/mail/sync').then(json);
 export const matchMail = () => xhrPost('/api/mail/match').then(json);
 export const getMailMessages = (limit = 200) => xhrGet(`/api/mail/messages?limit=${limit}`).then(json);
+export const getInvitations = () => xhrGet('/api/mail/invitations').then(json);
+export const updateInvitationAppointment = (listingId, appointmentAt) =>
+  xhrPut(`/api/mail/invitations/${encodeURIComponent(listingId)}`, { appointmentAt }).then(json);
 export const deleteAllMailMessages = () => xhrDelete('/api/mail/messages').then(json);
 export const getListingMailMessages = (listingId) =>
   xhrGet(`/api/mail/listings/${encodeURIComponent(listingId)}/messages`).then(json);

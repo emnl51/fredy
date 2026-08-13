@@ -20,7 +20,11 @@ const sqliteMock = vi.hoisted(() => ({
         get: () => {
           if (/FROM mail_accounts/.test(sql)) return mailAccount.row ?? undefined;
           if (/FROM mail_messages/.test(sql)) return owned.message ? { id: 'message-1' } : undefined;
-          if (/FROM listings/.test(sql)) return owned.listing ? { id: 'listing-1' } : undefined;
+          if (/FROM listings/.test(sql)) {
+            return owned.listing
+              ? { id: 'listing-1', status: JSON.stringify({ status: 'invited', setAt: 100 }) }
+              : undefined;
+          }
           return undefined;
         },
         run: (params) => {
@@ -40,11 +44,13 @@ const {
   getEnabledMailAccountsForSync,
   getMatchedMailThreadAnchors,
   getMailMessagesForListing,
+  getInvitationTracking,
   getMailMessages,
   getUnmatchedMailMessages,
   markMailSyncSuccessful,
   removeMailMessageListingMatch,
   searchOwnedListingsForMailAssignment,
+  setInvitationAppointment,
   purgeExpiredMailMessages,
   storeMailMessage,
   upsertMailAccount,
@@ -271,5 +277,21 @@ describe('mail matching storage ownership', () => {
       pattern: '%50\\%\\_berlin%',
       limit: 200,
     });
+  });
+
+  it('lists only invited listings owned by the mailbox user', () => {
+    sqliteMock.query.mockReturnValueOnce([
+      { id: 'listing-1', status: JSON.stringify({ status: 'invited', setAt: 100, appointmentAt: 200 }) },
+    ]);
+    const [invitation] = getInvitationTracking('user-1');
+
+    expect(sqliteMock.query.mock.calls[0][0]).toMatch(/j\.user_id = @userId/);
+    expect(invitation).toEqual(expect.objectContaining({ id: 'listing-1', appointmentAt: 200, messages: [] }));
+  });
+
+  it('updates an invitation appointment without replacing its status timestamp', () => {
+    expect(setInvitationAppointment('user-1', 'listing-1', 300)).toBe(true);
+    const update = calls.find((call) => /UPDATE listings SET status/.test(call.sql));
+    expect(JSON.parse(update.params.status)).toEqual({ status: 'invited', setAt: 100, appointmentAt: 300 });
   });
 });
