@@ -22,7 +22,7 @@ const sqliteMock = vi.hoisted(() => ({
           if (/FROM mail_messages/.test(sql)) return owned.message ? { id: 'message-1' } : undefined;
           if (/FROM listings/.test(sql)) {
             return owned.listing
-              ? { id: 'listing-1', status: JSON.stringify({ status: 'invited', setAt: 100 }) }
+              ? { id: 'listing-1', status: JSON.stringify({ status: 'invited', setAt: 100, appointmentAt: 200 }) }
               : undefined;
           }
           return undefined;
@@ -286,7 +286,26 @@ describe('mail matching storage ownership', () => {
     const [invitation] = getInvitationTracking('user-1');
 
     expect(sqliteMock.query.mock.calls[0][0]).toMatch(/j\.user_id = @userId/);
+    expect(sqliteMock.query.mock.calls[0][0]).toMatch(/IN \('invited', 'visited'\)/);
     expect(invitation).toEqual(expect.objectContaining({ id: 'listing-1', appointmentAt: 200, messages: [] }));
+  });
+
+  it('keeps the appointment when a mail assignment marks an invitation visited', () => {
+    expect(
+      assignMailMessageToListing({
+        messageId: 'message-1',
+        listingId: 'listing-1',
+        userId: 'user-1',
+        method: 'manual',
+        confidence: 100,
+        status: 'visited',
+      }),
+    ).toBe(true);
+
+    const statusCall = calls.find((call) => /UPDATE listings SET status/.test(call.sql));
+    expect(JSON.parse(statusCall.params.status)).toEqual(
+      expect.objectContaining({ status: 'visited', appointmentAt: 200 }),
+    );
   });
 
   it('updates an invitation appointment without replacing its status timestamp', () => {

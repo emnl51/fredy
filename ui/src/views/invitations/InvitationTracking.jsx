@@ -35,6 +35,7 @@ export default function InvitationTracking() {
   const [drafts, setDrafts] = useState({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
+  const [view, setView] = useState('upcoming');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -86,6 +87,23 @@ export default function InvitationTracking() {
     }
   };
 
+  const restoreInvitation = async (listingId) => {
+    setBusy(`restore:${listingId}`);
+    try {
+      await updateMailListingStatus(listingId, 'invited');
+      Toast.success(t('invitations.restored'));
+      await load();
+    } catch (error) {
+      Toast.error(errorMessage(error, t('invitations.saveError')));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const visibleInvitations = invitations.filter((invitation) =>
+    view === 'all' ? true : view === 'visited' ? invitation.status?.status === 'visited' : invitation.status?.status === 'invited',
+  );
+
   if (loading) {
     return (
       <div className="invitationTracking__loading">
@@ -106,11 +124,35 @@ export default function InvitationTracking() {
         }
       />
 
-      {invitations.length === 0 ? (
-        <Empty description={t('invitations.empty')} />
+      <div className="invitationTracking__filters">
+        <Button
+          theme={view === 'upcoming' ? 'solid' : 'light'}
+          type={view === 'upcoming' ? 'primary' : 'tertiary'}
+          onClick={() => setView('upcoming')}
+        >
+          {t('invitations.upcoming')} ({invitations.filter((item) => item.status?.status === 'invited').length})
+        </Button>
+        <Button
+          theme={view === 'visited' ? 'solid' : 'light'}
+          type={view === 'visited' ? 'primary' : 'tertiary'}
+          onClick={() => setView('visited')}
+        >
+          {t('invitations.visited')} ({invitations.filter((item) => item.status?.status === 'visited').length})
+        </Button>
+        <Button
+          theme={view === 'all' ? 'solid' : 'light'}
+          type={view === 'all' ? 'primary' : 'tertiary'}
+          onClick={() => setView('all')}
+        >
+          {t('invitations.all')} ({invitations.length})
+        </Button>
+      </div>
+
+      {visibleInvitations.length === 0 ? (
+        <Empty description={view === 'visited' ? t('invitations.emptyVisited') : t('invitations.empty')} />
       ) : (
         <div className="invitationTracking__list">
-          {invitations.map((invitation) => (
+          {visibleInvitations.map((invitation) => (
             <Card key={invitation.id} className="invitationTracking__card" bodyStyle={{ padding: 0 }}>
               <div className="invitationTracking__listing">
                 {invitation.imageUrl && <img src={invitation.imageUrl} alt="" loading="lazy" />}
@@ -121,6 +163,9 @@ export default function InvitationTracking() {
                         <IconCalendarClock />{' '}
                         {invitation.appointmentAt ? formatDate(invitation.appointmentAt) : t('invitations.dateMissing')}
                       </Tag>
+                      {invitation.status?.status === 'visited' && (
+                        <Tag color="green">{t('invitations.visitedBadge')}</Tag>
+                      )}
                       <Typography.Title heading={4}>{invitation.title || t('mail.untitledListing')}</Typography.Title>
                       <Typography.Text type="tertiary">
                         {[invitation.provider, invitation.address].filter(Boolean).join(' · ')}
@@ -138,26 +183,37 @@ export default function InvitationTracking() {
                     </Space>
                   </div>
 
-                  <div className="invitationTracking__appointment">
-                    <label htmlFor={`appointment-${invitation.id}`}>{t('invitations.appointment')}</label>
-                    <Input
-                      id={`appointment-${invitation.id}`}
-                      type="datetime-local"
-                      value={drafts[invitation.id] ?? ''}
-                      onChange={(value) => setDrafts((current) => ({ ...current, [invitation.id]: value }))}
-                    />
-                    <Button
-                      theme="solid"
-                      type="primary"
-                      loading={busy === `save:${invitation.id}`}
-                      onClick={() => saveAppointment(invitation.id)}
-                    >
-                      {t('invitations.save')}
-                    </Button>
-                    <Button loading={busy === `visited:${invitation.id}`} onClick={() => markVisited(invitation.id)}>
-                      {t('invitations.markVisited')}
-                    </Button>
-                  </div>
+                  {invitation.status?.status === 'invited' ? (
+                    <div className="invitationTracking__appointment">
+                      <label htmlFor={`appointment-${invitation.id}`}>{t('invitations.appointment')}</label>
+                      <Input
+                        id={`appointment-${invitation.id}`}
+                        type="datetime-local"
+                        value={drafts[invitation.id] ?? ''}
+                        onChange={(value) => setDrafts((current) => ({ ...current, [invitation.id]: value }))}
+                      />
+                      <Button
+                        theme="solid"
+                        type="primary"
+                        loading={busy === `save:${invitation.id}`}
+                        onClick={() => saveAppointment(invitation.id)}
+                      >
+                        {t('invitations.save')}
+                      </Button>
+                      <Button loading={busy === `visited:${invitation.id}`} onClick={() => markVisited(invitation.id)}>
+                        {t('invitations.markVisited')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="invitationTracking__archiveActions">
+                      <Button
+                        loading={busy === `restore:${invitation.id}`}
+                        onClick={() => restoreInvitation(invitation.id)}
+                      >
+                        {t('invitations.restore')}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
