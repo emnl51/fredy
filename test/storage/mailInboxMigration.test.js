@@ -5,7 +5,7 @@
 
 import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
-import { up } from '../../lib/services/storage/migrations/sql/32.mail-inbox.js';
+import { up } from '../../lib/services/storage/migrations/sql/35.mail-inbox.js';
 
 describe('mail inbox migration', () => {
   it('creates user-owned accounts and UIDVALIDITY-aware messages', () => {

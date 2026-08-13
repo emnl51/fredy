@@ -5,9 +5,9 @@
 
 import Database from 'better-sqlite3';
 import { describe, expect, it } from 'vitest';
-import { up as createInbox } from '../../lib/services/storage/migrations/sql/32.mail-inbox.js';
-import { up as createMatches } from '../../lib/services/storage/migrations/sql/33.mail-listing-matches.js';
-import { up as addThreadMethod } from '../../lib/services/storage/migrations/sql/34.mail-thread-match-method.js';
+import { up as createInbox } from '../../lib/services/storage/migrations/sql/35.mail-inbox.js';
+import { up as createMatches } from '../../lib/services/storage/migrations/sql/36.mail-listing-matches.js';
+import { up as addThreadMethod } from '../../lib/services/storage/migrations/sql/37.mail-thread-match-method.js';
 
 describe('mail listing matches migration', () => {
   it('stores one match per message and cascades deleted source rows', () => {
@@ -16,7 +16,7 @@ describe('mail listing matches migration', () => {
     db.exec(`
       CREATE TABLE users (id TEXT PRIMARY KEY);
       CREATE TABLE jobs (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id));
-      CREATE TABLE listings (id TEXT PRIMARY KEY, job_id TEXT NOT NULL REFERENCES jobs(id));
+      CREATE TABLE listings (id TEXT PRIMARY KEY, job_id TEXT NOT NULL REFERENCES jobs(id), status TEXT);
     `);
     createInbox(db);
     createMatches(db);
@@ -57,6 +57,14 @@ describe('mail listing matches migration', () => {
         )
         .run(),
     ).toThrow();
+
+    db.prepare(`UPDATE listings SET status = 'invited' WHERE id = 'listing-1'`).run();
+    db.prepare(`DELETE FROM mail_messages WHERE id = 'message-1'`).run();
+    expect(
+      db.prepare(`SELECT COUNT(*) AS count FROM mail_message_listing_matches WHERE message_id = 'message-1'`).get()
+        .count,
+    ).toBe(0);
+    expect(db.prepare(`SELECT status FROM listings WHERE id = 'listing-1'`).get().status).toBe('invited');
 
     db.prepare(`DELETE FROM listings WHERE id = 'listing-1'`).run();
     expect(db.prepare(`SELECT COUNT(*) AS count FROM mail_message_listing_matches`).get().count).toBe(0);

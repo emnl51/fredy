@@ -12,6 +12,10 @@ import { TRACKING_POIS } from '../../lib/TRACKING_POIS.js';
 const localeDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../ui/src/locales');
 const donateComponent = fs.readFileSync(path.join(localeDir, '../components/donate/Donate.jsx'), 'utf-8');
 const mailComponent = fs.readFileSync(path.join(localeDir, '../views/mail/MailInbox.jsx'), 'utf-8');
+const mailboxSettingsComponent = fs.readFileSync(
+  path.join(localeDir, '../views/settings/pages/MailboxPage.jsx'),
+  'utf-8',
+);
 const relatedMailComponent = fs.readFileSync(
   path.join(localeDir, '../views/listings/components/RelatedMailList.jsx'),
   'utf-8',
@@ -64,9 +68,9 @@ describe('locales', () => {
   });
 
   it('ships the complete mail inbox vocabulary in every language', () => {
-    const directKeys = [...`${mailComponent}\n${relatedMailComponent}`.matchAll(/(?<![\w$])t\('([^']+)'/g)].map(
-      (match) => match[1],
-    );
+    const directKeys = [
+      ...`${mailComponent}\n${mailboxSettingsComponent}\n${relatedMailComponent}`.matchAll(/(?<![\w$])t\('([^']+)'/g),
+    ].map((match) => match[1]);
     const dynamicKeys = [
       'mail.status.applied',
       'mail.status.invited',

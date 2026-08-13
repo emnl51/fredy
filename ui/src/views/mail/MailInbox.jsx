@@ -4,69 +4,39 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  Banner,
-  Button,
-  Card,
-  Empty,
-  Input,
-  InputNumber,
-  Popconfirm,
-  Select,
-  Space,
-  Spin,
-  Switch,
-  Tag,
-  Toast,
-  Typography,
-} from '@douyinfe/semi-ui-19';
-import { IconDelete, IconLink, IconMailStroked, IconRefresh, IconSave, IconUnlink } from '@douyinfe/semi-icons';
+import { Button, Card, Empty, Select, Space, Spin, Tag, Toast, Typography } from '@douyinfe/semi-ui-19';
+import { IconLink, IconMailStroked, IconRefresh, IconSetting, IconUnlink } from '@douyinfe/semi-icons';
+import { useNavigate } from 'react-router-dom';
 
 import Headline from '../../components/headline/Headline.jsx';
-import { SegmentPart } from '../../components/segment/SegmentPart.jsx';
 import { useLocale, useTranslation } from '../../services/i18n/i18n.jsx';
 import { errorMessage } from '../../services/xhr.js';
 import {
   assignMailMessage,
-  deleteMailAccount,
   getMailAccount,
   getMailMessages,
   matchMail,
   removeMailMessageMatch,
-  saveMailAccount,
   searchMailListings,
   syncMail,
-  testMailAccount,
   updateMailListingStatus,
 } from '../../services/mailClient.js';
 
 import './MailInbox.less';
 import { LISTING_STATUSES } from '../../services/listingStatus.js';
 
-const DEFAULT_ACCOUNT = {
-  host: '',
-  port: 993,
-  secure: true,
-  username: '',
-  password: '',
-  mailbox: 'INBOX',
-  enabled: true,
-};
-
 const STATUS_OPTIONS = LISTING_STATUSES;
 
 /**
  * User-owned incoming mailbox, message list and listing assignment workspace.
- *
- * The password field is never filled from the server. Leaving it blank keeps
- * the stored encrypted credential; typing a value replaces it on save.
+ * Connection settings are managed separately under Settings > Mailbox.
  *
  * @returns {React.ReactElement}
  */
 export default function MailInbox() {
   const t = useTranslation();
   const locale = useLocale();
-  const [account, setAccount] = useState(DEFAULT_ACCOUNT);
+  const navigate = useNavigate();
   const [hasAccount, setHasAccount] = useState(false);
   const [messages, setMessages] = useState([]);
   const [listings, setListings] = useState([]);
@@ -89,13 +59,7 @@ export default function MailInbox() {
     setLoading(true);
     try {
       const [storedAccount] = await Promise.all([getMailAccount(), refreshMessages(), refreshListings()]);
-      if (storedAccount) {
-        setHasAccount(true);
-        setAccount({ ...DEFAULT_ACCOUNT, ...storedAccount, password: '' });
-      } else {
-        setHasAccount(false);
-        setAccount(DEFAULT_ACCOUNT);
-      }
+      setHasAccount(Boolean(storedAccount));
     } catch (error) {
       Toast.error(errorMessage(error, t('mail.loadError')));
     } finally {
@@ -119,32 +83,6 @@ export default function MailInbox() {
       return null;
     } finally {
       setBusy(null);
-    }
-  };
-
-  const handleSave = async () => {
-    const payload = {
-      host: account.host,
-      port: Number(account.port),
-      secure: account.secure,
-      username: account.username,
-      mailbox: account.mailbox,
-      enabled: account.enabled,
-      ...(account.password ? { password: account.password } : {}),
-    };
-    const saved = await run('save', () => saveMailAccount(payload), 'mail.saved');
-    if (saved) {
-      setHasAccount(true);
-      setAccount((current) => ({ ...current, ...saved, password: '' }));
-    }
-  };
-
-  const handleDelete = async () => {
-    const removed = await run('delete', deleteMailAccount, 'mail.deleted');
-    if (removed) {
-      setHasAccount(false);
-      setAccount(DEFAULT_ACCOUNT);
-      setMessages([]);
     }
   };
 
@@ -181,8 +119,6 @@ export default function MailInbox() {
     [locale],
   );
 
-  const updateAccount = (field, value) => setAccount((current) => ({ ...current, [field]: value }));
-
   if (loading) {
     return (
       <div className="mailInbox__loading">
@@ -198,6 +134,9 @@ export default function MailInbox() {
         subtitle={t('mail.subtitle')}
         actions={
           <Space wrap>
+            <Button icon={<IconSetting />} onClick={() => navigate('/settings/mailbox')}>
+              {t('mail.settings')}
+            </Button>
             <Button
               icon={<IconRefresh />}
               onClick={() => run('match', matchMail, 'mail.matched', true)}
@@ -219,81 +158,6 @@ export default function MailInbox() {
           </Space>
         }
       />
-
-      <SegmentPart name={t('mail.accountTitle')} helpText={t('mail.accountHelp')} className="mailInbox__account">
-        <div className="mailInbox__formGrid">
-          <label>
-            <span>{t('mail.host')}</span>
-            <Input
-              value={account.host}
-              onChange={(value) => updateAccount('host', value)}
-              placeholder="imap.example.com"
-            />
-          </label>
-          <label>
-            <span>{t('mail.port')}</span>
-            <InputNumber min={1} max={65535} value={account.port} onChange={(value) => updateAccount('port', value)} />
-          </label>
-          <label>
-            <span>{t('mail.username')}</span>
-            <Input
-              value={account.username}
-              onChange={(value) => updateAccount('username', value)}
-              placeholder="name@example.com"
-            />
-          </label>
-          <label>
-            <span>{t('mail.password')}</span>
-            <Input
-              mode="password"
-              value={account.password}
-              onChange={(value) => updateAccount('password', value)}
-              placeholder={hasAccount ? t('mail.passwordKeep') : t('mail.passwordPlaceholder')}
-            />
-          </label>
-          <label>
-            <span>{t('mail.mailbox')}</span>
-            <Input value={account.mailbox} onChange={(value) => updateAccount('mailbox', value)} />
-          </label>
-          <div className="mailInbox__switches">
-            <label>
-              <Switch checked={account.secure} onChange={(value) => updateAccount('secure', value)} />{' '}
-              {t('mail.secure')}
-            </label>
-            <label>
-              <Switch checked={account.enabled} onChange={(value) => updateAccount('enabled', value)} />{' '}
-              {t('mail.enabled')}
-            </label>
-          </div>
-        </div>
-
-        {account.lastSyncError && <Banner type="danger" closeIcon={null} description={account.lastSyncError} />}
-        {account.lastSyncAt && (
-          <Typography.Text type="tertiary">
-            {t('mail.lastSync', { date: formatDate(account.lastSyncAt) })}
-          </Typography.Text>
-        )}
-
-        <div className="mailInbox__accountActions">
-          <Button theme="solid" type="primary" icon={<IconSave />} onClick={handleSave} loading={busy === 'save'}>
-            {t('mail.save')}
-          </Button>
-          <Button
-            onClick={() => run('test', testMailAccount, 'mail.connectionOk')}
-            loading={busy === 'test'}
-            disabled={!hasAccount}
-          >
-            {t('mail.testConnection')}
-          </Button>
-          {hasAccount && (
-            <Popconfirm title={t('mail.deleteConfirm')} onConfirm={handleDelete}>
-              <Button type="danger" theme="borderless" icon={<IconDelete />} loading={busy === 'delete'}>
-                {t('mail.deleteAccount')}
-              </Button>
-            </Popconfirm>
-          )}
-        </div>
-      </SegmentPart>
 
       <div className="mailInbox__summary">
         <Typography.Title heading={4}>{t('mail.messagesTitle')}</Typography.Title>

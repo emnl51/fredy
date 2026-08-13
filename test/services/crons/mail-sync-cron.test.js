@@ -15,6 +15,10 @@ async function loadCron() {
   vi.resetModules();
   vi.doMock(storagePath, () => ({
     getEnabledMailAccountsForSync: () => state.accounts,
+    purgeExpiredMailMessages: () => {
+      state.purges += 1;
+      return 2;
+    },
   }));
   vi.doMock(syncPath, () => ({
     syncMailAccount: async (accountId, userId) => {
@@ -51,6 +55,7 @@ describe('services/crons/mail-sync-cron', () => {
       deferred: null,
       scheduled: [],
       logs: { info: [], warn: [] },
+      purges: 0,
     };
   });
 
@@ -86,7 +91,8 @@ describe('services/crons/mail-sync-cron', () => {
       { accountId: 'account-1', userId: 'user-1' },
       { accountId: 'account-2', userId: 'user-2' },
     ]);
-    expect(result).toEqual({ accounts: 2, succeeded: 1, failed: 1, skipped: false });
+    expect(result).toEqual({ accounts: 2, succeeded: 1, failed: 1, purged: 2, skipped: false });
+    expect(state.purges).toBe(1);
   });
 
   it('contains a database failure without creating an unhandled cron rejection', async () => {
@@ -95,7 +101,7 @@ describe('services/crons/mail-sync-cron', () => {
 
     const result = await runMailSyncTask();
 
-    expect(result).toEqual({ accounts: 0, succeeded: 0, failed: 1, skipped: false });
+    expect(result).toEqual({ accounts: 0, succeeded: 0, failed: 1, purged: 0, skipped: false });
     expect(state.logs.warn.some((line) => line.includes('Scheduled mail sync sweep failed'))).toBe(true);
   });
 
