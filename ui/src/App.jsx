@@ -41,6 +41,7 @@ import Dashboard from './views/dashboard/Dashboard.jsx';
 import FinanceCalculator from './views/finance/FinanceCalculator.jsx';
 import MailInbox from './views/mail/MailInbox.jsx';
 import InvitationTracking from './views/invitations/InvitationTracking.jsx';
+import AutomationSuggestions from './views/automation/AutomationSuggestions.jsx';
 import ListingDetail from './views/listings/ListingDetail.jsx';
 import NewsModal from './components/news/NewsModal.jsx';
 import { I18nProvider, availableLanguages } from './services/i18n/i18n.jsx';
@@ -209,6 +210,7 @@ export default function FredyApp() {
                   <Route path="/finance" element={<FinanceCalculator />} />
                   <Route path="/mail" element={<MailInbox />} />
                   <Route path="/invitations" element={<InvitationTracking />} />
+                  <Route path="/automation" element={<AutomationSuggestions />} />
                   <Route path="/watchlistManagement" element={<WatchlistManagement />} />
 
                   {/* Settings that belong to whoever is signed in. No guard: they are theirs. */}
