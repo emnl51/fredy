@@ -166,6 +166,15 @@ describe('matchUnmatchedMailMessages', () => {
     });
   });
 
+  it('recognizes an explicit pre-viewing rejection as not invited', () => {
+    expect(
+      inferGermanApplicationUpdate(
+        'Neue Nachricht - Immobilienanfrage "Singlewohnung" mit der Objektnummer "0100/01240/0402/0207"',
+        'Auf Grund der hohen Anzahl an Interessenten konnten wir Ihre Anfrage nicht berücksichtigen. Dies war keine Entscheidung gegen Sie, sondern für einen der anderen Bewerber.',
+      ),
+    ).toEqual({ status: 'not_invited' });
+  });
+
   it('does not assign workflow stages from generic portal subjects', () => {
     expect(
       inferGermanApplicationUpdate('Ihre persönliche Vorstellung beim Anbieter', 'Die Nr. 1 für Immobilien'),

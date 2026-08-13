@@ -7,6 +7,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const calls = vi.hoisted(() => []);
 const owned = vi.hoisted(() => ({ message: true, listing: true }));
+const listingStatus = vi.hoisted(() => ({ value: { status: 'invited', setAt: 100, appointmentAt: 200 } }));
 const mailAccount = vi.hoisted(() => ({ row: null }));
 const sqliteMock = vi.hoisted(() => ({
   execute: vi.fn((sql, params) => {
@@ -21,9 +22,7 @@ const sqliteMock = vi.hoisted(() => ({
           if (/FROM mail_accounts/.test(sql)) return mailAccount.row ?? undefined;
           if (/FROM mail_messages/.test(sql)) return owned.message ? { id: 'message-1' } : undefined;
           if (/FROM listings/.test(sql)) {
-            return owned.listing
-              ? { id: 'listing-1', status: JSON.stringify({ status: 'invited', setAt: 100, appointmentAt: 200 }) }
-              : undefined;
+            return owned.listing ? { id: 'listing-1', status: JSON.stringify(listingStatus.value) } : undefined;
           }
           return undefined;
         },
@@ -61,6 +60,7 @@ beforeEach(() => {
   calls.length = 0;
   owned.message = true;
   owned.listing = true;
+  listingStatus.value = { status: 'invited', setAt: 100, appointmentAt: 200 };
   mailAccount.row = null;
   vi.clearAllMocks();
 });
@@ -334,6 +334,22 @@ describe('mail matching storage ownership', () => {
       method: 'thread',
       confidence: 95,
       status: 'applied',
+      automatic: true,
+    });
+
+    expect(calls.some((call) => /UPDATE listings SET status/.test(call.sql))).toBe(false);
+    expect(calls.some((call) => /INSERT INTO mail_message_listing_matches/.test(call.sql))).toBe(true);
+  });
+
+  it('does not let automatic terminal stages overwrite each other', () => {
+    listingStatus.value = { status: 'accepted', setAt: 100 };
+    assignMailMessageToListing({
+      messageId: 'message-1',
+      listingId: 'listing-1',
+      userId: 'user-1',
+      method: 'listing_code',
+      confidence: 100,
+      status: 'not_invited',
       automatic: true,
     });
 
