@@ -32,7 +32,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
         with:
-          ref: ${{ inputs.release_tag || github.ref }}
+          # release_tag names the container image; the workflow dispatch commit is the source.
+          ref: ${{ github.sha }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
