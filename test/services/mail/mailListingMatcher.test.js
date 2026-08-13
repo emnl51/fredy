@@ -140,6 +140,91 @@ describe('matchUnmatchedMailMessages', () => {
     });
   });
 
+  it.each([
+    'Einladung zum Besichtigungstermin - Immobilienanfrage',
+    'Terminerinnerung - Immobilienanfrage',
+    'Erinnerung Besichtigungstermin - Egon-Erwin-Kisch-Str. 1',
+    'Terminbestätigung: Baikalstr. 21, 10319 Berlin',
+    'Einladung Terminbuchung Welsestr. 95, 13057 Berlin',
+    'Einladung zu einem Besichtigungstermin Karl-Marx-Allee 48',
+  ])('recognizes invitation subject: %s', (subject) => {
+    expect(inferGermanApplicationUpdate(subject, 'Wir freuen uns auf Ihren Besuch.')).toEqual({ status: 'invited' });
+  });
+
+  it('recognizes an abbreviated required-documents subject', () => {
+    expect(
+      inferGermanApplicationUpdate('Mietobjekt Welsestr. 95, 13057 Berlin Erforderl. Unterlag', 'Guten Tag'),
+    ).toEqual({ status: 'documents_sent' });
+  });
+
+  it('recognizes provider-specific application and form confirmations', () => {
+    expect(inferGermanApplicationUpdate('Bestätigung Ihrer Anfrage - Immobilienanfrage', 'Vielen Dank.')).toEqual({
+      status: 'applied',
+    });
+    expect(inferGermanApplicationUpdate('Formularbestätigung - Immobilienanfrage', 'Vielen Dank.')).toEqual({
+      status: 'documents_sent',
+    });
+  });
+
+  it('does not assign workflow stages from generic portal subjects', () => {
+    expect(
+      inferGermanApplicationUpdate('Ihre persönliche Vorstellung beim Anbieter', 'Die Nr. 1 für Immobilien'),
+    ).toBeNull();
+    expect(inferGermanApplicationUpdate('Ihre Wohnungsanfrage - Selbstauskunft', 'Guten Tag')).toBeNull();
+  });
+
+  it('matches a Deutsche Wohnen slash reference in parentheses', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      messages: [
+        {
+          id: 'deutsche-wohnen-message',
+          subject: 'Ihre Immobilienanfrage Turiner Straße 14 (0851/343381/3004) #IO_23509022#',
+        },
+      ],
+      listings: [
+        {
+          id: 'deutsche-wohnen-listing',
+          hash: '0851/343381/3004',
+          link: 'https://example.com/listing',
+          address: 'Turiner Straße 14, 13347 Berlin',
+        },
+      ],
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(
+      expect.objectContaining({ listingId: 'deutsche-wohnen-listing', method: 'listing_code', automatic: true }),
+    );
+  });
+
+  it('extracts a bare parenthesized Objekt number without assigning a generic new-message status', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      messages: [
+        {
+          id: 'immoscout-message',
+          subject: 'Neue Nachricht zu Ihrer Anfrage (Objekt 169767342)',
+          textBody: 'Du hast eine neue Nachricht vom Anbieter.',
+        },
+      ],
+      listings: [
+        {
+          id: 'immoscout-listing',
+          hash: '169767342',
+          link: 'https://www.immobilienscout24.de/expose/169767342',
+          address: 'Welsestraße 95, 13057 Berlin',
+        },
+      ],
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(
+      expect.objectContaining({ listingId: 'immoscout-listing', method: 'listing_code', automatic: true }),
+    );
+    expect(assign.mock.calls[0][0]).not.toHaveProperty('status');
+  });
+
   it('matches a reference number embedded in a typical German reply', async () => {
     const assign = vi.fn(() => true);
     await matchUnmatchedMailMessages('user-1', {
