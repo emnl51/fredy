@@ -183,9 +183,11 @@ days under **Settings → Mailbox**, delete downloaded messages without deleting
 delete the account and all associated mail data. Listing application statuses are preserved when
 retention cleanup removes messages.
 
-Images are published as `ghcr.io/emnl51/fredy:master` for the latest development build and with
-immutable release tags such as `ghcr.io/emnl51/fredy:26.0.0-mail.2`. Override `FREDY_IMAGE` when
-testing or pinning another tag.
+Use `ghcr.io/emnl51/fredy:mail-latest` for the latest tested mail/application release. This rolling
+production tag advances only when a release is published, so `FREDY_IMAGE` does not need to change
+for every update. Immutable tags such as `ghcr.io/emnl51/fredy:26.0.0-mail.2` remain available for
+pinning and rollback. `ghcr.io/emnl51/fredy:master` is the latest development build and may change
+between releases.
 
 The current authentication mode is IMAP password/app-password. Gmail accounts should use an app
 password. Microsoft Exchange Online has disabled basic IMAP authentication and therefore requires

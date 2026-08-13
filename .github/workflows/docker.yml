@@ -2,6 +2,11 @@ name: Create and publish Docker image
 
 on:
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Optional immutable release tag to publish together with mail-latest
+        required: false
+        type: string
   push:
     branches:
       - 'master'
@@ -20,12 +25,14 @@ jobs:
       packages: write
 
     concurrency:
-      group: ${{ github.workflow }}-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.release_tag || 'development' }}
       cancel-in-progress: true
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.release_tag || github.ref }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -50,6 +57,8 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
+            type=raw,value=${{ inputs.release_tag }},enable=${{ inputs.release_tag != '' }}
+            type=raw,value=mail-latest,enable=${{ inputs.release_tag != '' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3

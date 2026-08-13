@@ -41,4 +41,9 @@ jobs:
               $prerelease_flag
           fi
 
-          gh workflow run docker.yml --repo "$GITHUB_REPOSITORY" --ref "$version"
+          # Load the current workflow from master, but build the immutable release tag. This also
+          # advances the rolling production channel without moving old version tags.
+          gh workflow run docker.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref master \
+            -f release_tag="$version"
