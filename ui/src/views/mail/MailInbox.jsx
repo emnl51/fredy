@@ -4,7 +4,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button, Card, Empty, Select, Space, Spin, Tag, Toast, Typography } from '@douyinfe/semi-ui-19';
+import { Button, Card, Empty, Input, Select, Space, Spin, Tag, Toast, Typography } from '@douyinfe/semi-ui-19';
 import { IconLink, IconMailStroked, IconRefresh, IconSetting, IconUnlink } from '@douyinfe/semi-icons';
 import { useNavigate } from 'react-router-dom';
 
@@ -44,6 +44,8 @@ export default function MailInbox() {
   const [selectedStatuses, setSelectedStatuses] = useState({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(null);
+  const [messageFilter, setMessageFilter] = useState('all');
+  const [messageQuery, setMessageQuery] = useState('');
 
   const refreshMessages = useCallback(async () => {
     const next = await getMailMessages(500);
@@ -119,6 +121,27 @@ export default function MailInbox() {
     [locale],
   );
 
+  const visibleMessages = useMemo(() => {
+    const query = messageQuery.trim().toLocaleLowerCase(locale);
+    return messages.filter((message) => {
+      if (messageFilter === 'matched' && !message.match) return false;
+      if (messageFilter === 'unmatched' && message.match) return false;
+      if (!query) return true;
+      const searchable = [
+        message.subject,
+        message.senderName,
+        message.senderAddress,
+        message.match?.listing?.title,
+        message.match?.listing?.address,
+        message.match?.listing?.provider,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLocaleLowerCase(locale);
+      return searchable.includes(query);
+    });
+  }, [locale, messageFilter, messageQuery, messages]);
+
   if (loading) {
     return (
       <div className="mailInbox__loading">
@@ -160,15 +183,31 @@ export default function MailInbox() {
       />
 
       <div className="mailInbox__summary">
-        <Typography.Title heading={4}>{t('mail.messagesTitle')}</Typography.Title>
-        <Typography.Text type="tertiary">{t('mail.messageCount', { count: messages.length })}</Typography.Text>
+        <div>
+          <Typography.Title heading={4}>{t('mail.messagesTitle')}</Typography.Title>
+          <Typography.Text type="tertiary">
+            {t('mail.filteredMessageCount', { shown: visibleMessages.length, count: messages.length })}
+          </Typography.Text>
+        </div>
+        <Space wrap>
+          <Input showClear value={messageQuery} placeholder={t('mail.searchMessages')} onChange={setMessageQuery} />
+          <Select value={messageFilter} onChange={setMessageFilter}>
+            <Select.Option value="all">{t('mail.filter.all')}</Select.Option>
+            <Select.Option value="unmatched">{t('mail.filter.unmatched')}</Select.Option>
+            <Select.Option value="matched">{t('mail.filter.matched')}</Select.Option>
+          </Select>
+        </Space>
       </div>
 
-      {messages.length === 0 ? (
-        <Empty description={hasAccount ? t('mail.empty') : t('mail.configureFirst')} />
+      {visibleMessages.length === 0 ? (
+        <Empty
+          description={
+            messages.length === 0 ? (hasAccount ? t('mail.empty') : t('mail.configureFirst')) : t('mail.noResults')
+          }
+        />
       ) : (
         <div className="mailInbox__messages">
-          {messages.map((message) => (
+          {visibleMessages.map((message) => (
             <Card key={message.id} className="mailInbox__messageCard" bodyStyle={{ padding: 16 }}>
               <div className="mailInbox__messageHeader">
                 <div>

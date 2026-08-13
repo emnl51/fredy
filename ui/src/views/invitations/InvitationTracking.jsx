@@ -100,9 +100,15 @@ export default function InvitationTracking() {
     }
   };
 
-  const visibleInvitations = invitations.filter((invitation) =>
-    view === 'all' ? true : view === 'visited' ? invitation.status?.status === 'visited' : invitation.status?.status === 'invited',
-  );
+  const now = Date.now();
+  const isOverdue = (invitation) =>
+    invitation.status?.status === 'invited' && invitation.appointmentAt != null && invitation.appointmentAt < now;
+  const visibleInvitations = invitations.filter((invitation) => {
+    if (view === 'all') return true;
+    if (view === 'visited') return invitation.status?.status === 'visited';
+    if (view === 'overdue') return isOverdue(invitation);
+    return invitation.status?.status === 'invited' && !isOverdue(invitation);
+  });
 
   if (loading) {
     return (
@@ -125,6 +131,13 @@ export default function InvitationTracking() {
       />
 
       <div className="invitationTracking__filters">
+        <Button
+          theme={view === 'overdue' ? 'solid' : 'light'}
+          type={view === 'overdue' ? 'danger' : 'tertiary'}
+          onClick={() => setView('overdue')}
+        >
+          {t('invitations.overdue')} ({invitations.filter(isOverdue).length})
+        </Button>
         <Button
           theme={view === 'upcoming' ? 'solid' : 'light'}
           type={view === 'upcoming' ? 'primary' : 'tertiary'}
@@ -149,7 +162,15 @@ export default function InvitationTracking() {
       </div>
 
       {visibleInvitations.length === 0 ? (
-        <Empty description={view === 'visited' ? t('invitations.emptyVisited') : t('invitations.empty')} />
+        <Empty
+          description={
+            view === 'visited'
+              ? t('invitations.emptyVisited')
+              : view === 'overdue'
+                ? t('invitations.emptyOverdue')
+                : t('invitations.empty')
+          }
+        />
       ) : (
         <div className="invitationTracking__list">
           {visibleInvitations.map((invitation) => (
@@ -166,6 +187,7 @@ export default function InvitationTracking() {
                       {invitation.status?.status === 'visited' && (
                         <Tag color="green">{t('invitations.visitedBadge')}</Tag>
                       )}
+                      {isOverdue(invitation) && <Tag color="red">{t('invitations.overdueBadge')}</Tag>}
                       <Typography.Title heading={4}>{invitation.title || t('mail.untitledListing')}</Typography.Title>
                       <Typography.Text type="tertiary">
                         {[invitation.provider, invitation.address].filter(Boolean).join(' · ')}
@@ -176,7 +198,10 @@ export default function InvitationTracking() {
                         {t('invitations.openInFredy')}
                       </Button>
                       {invitation.link && (
-                        <Button icon={<IconExternalOpen />} onClick={() => window.open(invitation.link, '_blank', 'noopener')}>
+                        <Button
+                          icon={<IconExternalOpen />}
+                          onClick={() => window.open(invitation.link, '_blank', 'noopener')}
+                        >
                           {t('invitations.openOriginal')}
                         </Button>
                       )}

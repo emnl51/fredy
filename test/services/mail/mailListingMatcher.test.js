@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   extractListingCodes,
   extractAddressVariants,
+  extractGermanAppointmentAt,
   inferGermanApplicationUpdate,
   matchUnmatchedMailMessages,
   normalizeMailMatchText,
@@ -118,13 +119,13 @@ describe('matchUnmatchedMailMessages', () => {
     ).toEqual({ status: 'applied' });
   });
 
-  it('recognizes a German document request without treating generic mail as documents sent', async () => {
+  it('does not treat a German document request as documents already sent', async () => {
     expect(
       inferGermanApplicationUpdate(
         'Neue Nachricht – Objektnummer 1000/00185/0101/0218',
         'Bitte verwenden Sie das Formular, um folgende Unterlagen hochzuladen: Einkommen, Schufa, Mietschuldenfreiheit.',
       ),
-    ).toEqual({ status: 'documents_sent' });
+    ).toBeNull();
     expect(inferGermanApplicationUpdate('Unterlagen zu Ihrer Information', 'Vielen Dank.')).toBeNull();
   });
 
@@ -151,10 +152,10 @@ describe('matchUnmatchedMailMessages', () => {
     expect(inferGermanApplicationUpdate(subject, 'Wir freuen uns auf Ihren Besuch.')).toEqual({ status: 'invited' });
   });
 
-  it('recognizes an abbreviated required-documents subject', () => {
+  it('does not mark an abbreviated required-documents subject as sent', () => {
     expect(
       inferGermanApplicationUpdate('Mietobjekt Welsestr. 95, 13057 Berlin Erforderl. Unterlag', 'Guten Tag'),
-    ).toEqual({ status: 'documents_sent' });
+    ).toBeNull();
   });
 
   it('recognizes provider-specific application and form confirmations', () => {
@@ -164,6 +165,42 @@ describe('matchUnmatchedMailMessages', () => {
     expect(inferGermanApplicationUpdate('Formularbestätigung - Immobilienanfrage', 'Vielen Dank.')).toEqual({
       status: 'documents_sent',
     });
+  });
+
+  it('recognizes explicit document receipt confirmations', () => {
+    expect(inferGermanApplicationUpdate('Ihre Unterlagen sind eingegangen', 'Vielen Dank.')).toEqual({
+      status: 'documents_sent',
+    });
+    expect(inferGermanApplicationUpdate('Selbstauskunft', 'Ihr Formular wurde erfolgreich abgesendet.')).toEqual({
+      status: 'documents_sent',
+    });
+  });
+
+  it('recognizes explicit acceptance and post-application rejection messages', () => {
+    expect(inferGermanApplicationUpdate('Wohnungszusage', 'Wir möchten Ihnen die Wohnung anbieten.')).toEqual({
+      status: 'accepted',
+    });
+    expect(inferGermanApplicationUpdate('Ihre Bewerbung', 'Leider müssen wir Ihnen eine Absage erteilen.')).toEqual({
+      status: 'rejected',
+    });
+    expect(inferGermanApplicationUpdate('Ihre Anfrage', 'Die Wohnung wurde anderweitig vergeben.')).toEqual({
+      status: 'rejected',
+    });
+  });
+
+  it('lets the current rejection override a quoted older invitation', () => {
+    expect(
+      inferGermanApplicationUpdate(
+        'Re: Terminbestätigung',
+        'Leider müssen wir Ihnen eine Absage erteilen.\n-----Ursprüngliche Nachricht-----\nEinladung zum Besichtigungstermin am 11.08.2026 um 13:30 Uhr',
+      ),
+    ).toEqual({ status: 'rejected' });
+  });
+
+  it('extracts two-digit years and German month names without accepting invalid dates', () => {
+    expect(extractGermanAppointmentAt('Termin am 11.08.26 um 13:30 Uhr')).toBe(new Date(2026, 7, 11, 13, 30).getTime());
+    expect(extractGermanAppointmentAt('Mo., 3. Aug. 2026 17:30')).toBe(new Date(2026, 7, 3, 17, 30).getTime());
+    expect(extractGermanAppointmentAt('Termin am 31.02.2026 um 13:30 Uhr')).toBeNull();
   });
 
   it('recognizes an explicit pre-viewing rejection as not invited', () => {
