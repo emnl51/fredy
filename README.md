@@ -184,7 +184,7 @@ delete the account and all associated mail data. Listing application statuses ar
 retention cleanup removes messages.
 
 Images are published as `ghcr.io/emnl51/fredy:master` for the latest development build and with
-immutable release tags such as `ghcr.io/emnl51/fredy:26.0.0-mail.1`. Override `FREDY_IMAGE` when
+immutable release tags such as `ghcr.io/emnl51/fredy:26.0.0-mail.2`. Override `FREDY_IMAGE` when
 testing or pinning another tag.
 
 The current authentication mode is IMAP password/app-password. Gmail accounts should use an app
