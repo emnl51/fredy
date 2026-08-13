@@ -42,13 +42,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Read package version
-        id: package
-        run: |
-          version=$(node -p "require('./package.json').version")
-          test -n "$version"
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@v4
@@ -57,7 +50,6 @@ jobs:
           tags: |
             type=ref,event=branch
             type=ref,event=tag
-            type=raw,value=${{ steps.package.outputs.version }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
