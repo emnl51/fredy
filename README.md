@@ -1,29 +1,36 @@
 <p align="center">
 
-<a href="https://fredy.orange-coding.net/">
+<a href="https://github.com/emnl51/fredy">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/orangecoding/fredy/blob/master/doc/logo_white.png" width="400">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/orangecoding/fredy/blob/master/doc/logo.png" width="400">
-  <img alt="Jetbrains Open Source" src="https://github.com/orangecoding/fredy/blob/master/doc/logo.png">
+  <source media="(prefers-color-scheme: dark)" srcset="doc/logo_white.png" width="400">
+  <source media="(prefers-color-scheme: light)" srcset="doc/logo.png" width="400">
+  <img alt="Fredy" src="doc/logo.png">
 </picture>
 </a>
 </p>
 
 <p align="center">
-  <a href="https://fredy.orange-coding.net/" target="_blank">Website</a>&nbsp;&nbsp;|&nbsp;&nbsp;
-  <a href="https://fredy-demo.orange-coding.net/" target="_blank">Demo</a>
+  <a href="https://github.com/emnl51/fredy" target="_blank">Fork</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="https://github.com/emnl51/fredy/releases" target="_blank">Releases</a>
 </p>
 
 <p align="center">
-  <img src="https://github.com/orangecoding/fredy/actions/workflows/test.yml/badge.svg" alt="Tests" />
-  <img src="https://github.com/orangecoding/fredy/actions/workflows/docker.yml/badge.svg" alt="Docker" />
-  <img src="https://github.com/orangecoding/fredy/actions/workflows/check_source.yml/badge.svg" alt="Source" />
-  <img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fghcr-badge.elias.eu.org%2Fapi%2Forangecoding%2Ffredy%2Ffredy&query=%24.downloadCount&label=Docker%20Pulls" alt="Docker Pulls" />
+  <img src="https://github.com/emnl51/fredy/actions/workflows/test.yml/badge.svg" alt="Tests" />
+  <img src="https://github.com/emnl51/fredy/actions/workflows/docker.yml/badge.svg" alt="Docker" />
+  <img src="https://github.com/emnl51/fredy/actions/workflows/check_source.yml/badge.svg" alt="Source" />
 </p>
 
 
 
 # Fredy 🏡 - Your Self-Hosted Real Estate Finder for Germany
+
+> [!IMPORTANT]
+> This is an independently maintained fork of
+> [orangecoding/fredy](https://github.com/orangecoding/fredy). It continues to incorporate relevant
+> updates from the upstream project while developing a broader rental-application workflow around
+> incoming-mail management, mail-to-listing matching, application stages and appointment tracking.
+> Development, releases, Docker images and update notifications for this edition are managed
+> through [emnl51/fredy](https://github.com/emnl51/fredy).
 
 Finding an apartment or house in Germany can be stressful and
 time-consuming.\
@@ -68,6 +75,13 @@ there and when the next one leaves. See [Travel Time](#travel-time) and
     transport, car, bike or on foot, and filters listings by it
 -   Makes **public transport visible**: the network on the map, live departures per stop,
     and the nearest stops for every listing
+-   📬 Synchronizes a personal **IMAP inbox** and keeps mailbox access scoped to each user
+-   🔗 Automatically matches incoming landlord messages to listings, with manual assignment as a
+    fallback for ambiguous messages
+-   📋 Tracks application stages from **Applied** through invitations, visits, documents and final
+    decisions
+-   📅 Provides an **Appointments** view with invitation date/time, listing details, related mail
+    and an archive for completed visits
 
 ------------------------------------------------------------------------
 
@@ -119,7 +133,7 @@ docker run -d --name fredy \
   -v fredy_conf:/conf \
   -v fredy_db:/db \
   -p 9998:9998 \
-  ghcr.io/orangecoding/fredy:master
+  ghcr.io/emnl51/fredy:master
 ```
 
 Logs:
@@ -169,8 +183,9 @@ days under **Settings → Mailbox**, delete downloaded messages without deleting
 delete the account and all associated mail data. Listing application statuses are preserved when
 retention cleanup removes messages.
 
-The fork image is published as `ghcr.io/emnl51/fredy:master`; override it with `FREDY_IMAGE` when
-testing another tag.
+Images are published as `ghcr.io/emnl51/fredy:master` for the latest development build and with
+immutable release tags such as `ghcr.io/emnl51/fredy:26.0.0-mail.1`. Override `FREDY_IMAGE` when
+testing or pinning another tag.
 
 The current authentication mode is IMAP password/app-password. Gmail accounts should use an app
 password. Microsoft Exchange Online has disabled basic IMAP authentication and therefore requires
@@ -611,14 +626,15 @@ I’ve had one too many PRs full of hallucinated bullshit.
 
 Thanks to everyone who has contributed!
 
-<a href="https://github.com/orangecoding/fredy/graphs/contributors"><img src="https://contrib.rocks/image?repo=orangecoding/fredy" /></a>
+<a href="https://github.com/emnl51/fredy/graphs/contributors"><img src="https://contrib.rocks/image?repo=emnl51/fredy" /></a>
 
 See the [Contributing
-Guide](https://github.com/orangecoding/fredy/blob/master/CONTRIBUTING.md).
+Guide](https://github.com/emnl51/fredy/blob/master/CONTRIBUTING.md). Contributions and issue reports
+for this edition should be directed to [emnl51/fredy](https://github.com/emnl51/fredy).
 
 ------------------------------------------------------------------------
 
 ## ⭐ Star History
 
 [![Star History
-Chart](https://api.star-history.com/svg?repos=orangecoding/fredy&type=Date)](https://www.star-history.com/#orangecoding/fredy&Date)
+Chart](https://api.star-history.com/svg?repos=emnl51/fredy&type=Date)](https://www.star-history.com/#emnl51/fredy&Date)

@@ -35,26 +35,46 @@ describe('GET /api/version', () => {
   });
 
   const githubReturns = (body) => fetchMock.mockResolvedValue({ json: async () => body });
+  const release = (tagName, extra = {}) => ({ tag_name: tagName, ...extra });
 
   it('reports a newer release', async () => {
-    githubReturns({ tag_name: '24.0.0', html_url: 'https://example/rel', body: 'notes' });
+    githubReturns([release('24.0.0', { html_url: 'https://example/rel', body: 'notes' })]);
     const result = await handler();
     expect(result).toMatchObject({ newVersion: true, version: '24.0.0', localFredyVersion: '23.2.3' });
+    expect(fetchMock).toHaveBeenCalledWith('https://api.github.com/repos/emnl51/fredy/releases?per_page=20');
   });
 
   it('reports no update when the local version is current', async () => {
-    githubReturns({ tag_name: '23.2.3' });
+    githubReturns([release('23.2.3')]);
+    expect(await handler()).toEqual({ newVersion: false, localFredyVersion: '23.2.3' });
+  });
+
+  it('includes fork prereleases and selects the greatest semantic version', async () => {
+    githubReturns([
+      release('23.2.3-mail.1'),
+      release('23.2.4-mail.2', { html_url: 'https://example/prerelease', body: 'notes' }),
+      release('not-a-version'),
+    ]);
+    expect(await handler()).toMatchObject({
+      newVersion: true,
+      version: '23.2.4-mail.2',
+      url: 'https://example/prerelease',
+    });
+  });
+
+  it('ignores draft releases', async () => {
+    githubReturns([release('24.0.0', { draft: true }), release('23.2.3')]);
     expect(await handler()).toEqual({ newVersion: false, localFredyVersion: '23.2.3' });
   });
 
   it('calls GitHub once across many requests', async () => {
-    githubReturns({ tag_name: '24.0.0', html_url: 'https://example/rel', body: 'notes' });
+    githubReturns([release('24.0.0', { html_url: 'https://example/rel', body: 'notes' })]);
     for (let i = 0; i < 5; i++) await handler();
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it('asks again after the two hour window', async () => {
-    githubReturns({ tag_name: '24.0.0', html_url: 'https://example/rel', body: 'notes' });
+    githubReturns([release('24.0.0', { html_url: 'https://example/rel', body: 'notes' })]);
     await handler();
     vi.advanceTimersByTime(2 * 60 * 60 * 1000 + 1);
     await handler();
