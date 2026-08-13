@@ -2,20 +2,12 @@ name: Publish release
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: Release tag
-        required: true
-        type: string
-      title:
-        description: Release title
-        required: true
-        type: string
-      prerelease:
-        description: Mark as a pre-release
-        required: true
-        default: true
-        type: boolean
+  push:
+    branches:
+      - master
+    paths:
+      - package.json
+      - .github/workflows/release.yml
 
 permissions:
   contents: write
@@ -24,21 +16,29 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ inputs.version }}
-          TITLE: ${{ inputs.title }}
-          PRERELEASE: ${{ inputs.prerelease }}
         run: |
+          version=$(node -p 'require("./package.json").version')
+          title="Fredy Mail & Application Tracking $version"
+
+          if gh release view "$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $version already exists."
+            exit 0
+          fi
+
           prerelease_flag=""
-          if [ "$PRERELEASE" = "true" ]; then
+          if [[ "$version" == *-* ]]; then
             prerelease_flag="--prerelease"
           fi
 
-          gh release create "$VERSION" \
+          gh release create "$version" \
             --repo "$GITHUB_REPOSITORY" \
             --target "$GITHUB_SHA" \
-            --title "$TITLE" \
+            --title "$title" \
             --generate-notes \
             $prerelease_flag
