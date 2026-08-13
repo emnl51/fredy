@@ -76,6 +76,7 @@ export default function Navigation({ isAdmin }) {
       { itemKey: '/settings/travel-time', text: t('nav.travelTime') },
       { itemKey: '/settings/listings', text: t('nav.listingDetails') },
       { itemKey: '/settings/notifications', text: t('nav.notifications') },
+      { itemKey: '/settings/ai-integration', text: t('nav.aiIntegration') },
     ],
   });
 
