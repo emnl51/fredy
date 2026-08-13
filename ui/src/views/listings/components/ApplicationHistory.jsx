@@ -9,7 +9,7 @@ import { IconCalendarClock } from '@douyinfe/semi-icons';
 
 import { useLocale, useTranslation } from '../../../services/i18n/i18n.jsx';
 import { getApplicationContext } from '../../../services/applicationClient.js';
-import './RelatedMailList.less';
+import './ApplicationHistory.less';
 
 const { Text, Title } = Typography;
 

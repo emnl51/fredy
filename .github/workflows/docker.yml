@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: Optional immutable release tag to publish together with mail-latest
+        description: Optional immutable release tag to publish together with ai-latest
         required: false
         type: string
   push:
@@ -58,6 +58,8 @@ jobs:
             type=ref,event=branch
             type=ref,event=tag
             type=raw,value=${{ inputs.release_tag }},enable=${{ inputs.release_tag != '' }}
+            type=raw,value=ai-latest,enable=${{ inputs.release_tag != '' }}
+            # Compatibility channel for installations upgrading from the IMAP edition.
             type=raw,value=mail-latest,enable=${{ inputs.release_tag != '' }}
 
       - name: Build and push Docker image
@@ -84,7 +86,7 @@ jobs:
           SECONDS_ELAPSED=0
           HEALTH_CHECK_INTERVAL=5
           TOTAL_DURATION=30
-          
+
           while [ $SECONDS_ELAPSED -lt $TOTAL_DURATION ]; do
             HEALTH_STATUS=$(docker inspect --format='{{.State.Health.Status}}' fredy 2>/dev/null || echo "not_found")
             CONTAINER_STATUS=$(docker inspect --format='{{.State.Status}}' fredy 2>/dev/null || echo "not_found")

@@ -11,13 +11,12 @@ import { TRACKING_POIS } from '../../lib/TRACKING_POIS.js';
 
 const localeDir = path.join(path.dirname(fileURLToPath(import.meta.url)), '../../ui/src/locales');
 const donateComponent = fs.readFileSync(path.join(localeDir, '../components/donate/Donate.jsx'), 'utf-8');
-const mailComponent = fs.readFileSync(path.join(localeDir, '../views/mail/MailInbox.jsx'), 'utf-8');
-const mailboxSettingsComponent = fs.readFileSync(
-  path.join(localeDir, '../views/settings/pages/MailboxPage.jsx'),
+const aiIntegrationComponent = fs.readFileSync(
+  path.join(localeDir, '../views/settings/pages/AiIntegrationPage.jsx'),
   'utf-8',
 );
-const relatedMailComponent = fs.readFileSync(
-  path.join(localeDir, '../views/listings/components/RelatedMailList.jsx'),
+const applicationHistoryComponent = fs.readFileSync(
+  path.join(localeDir, '../views/listings/components/ApplicationHistory.jsx'),
   'utf-8',
 );
 
@@ -95,26 +94,22 @@ describe('locales', () => {
     }
   });
 
-  it('ships the complete mail inbox vocabulary in every language', () => {
+  it('ships the AI application workflow vocabulary in every language', () => {
     const directKeys = [
-      ...`${mailComponent}\n${mailboxSettingsComponent}\n${relatedMailComponent}`.matchAll(/(?<![\w$])t\('([^']+)'/g),
+      ...`${aiIntegrationComponent}\n${applicationHistoryComponent}`.matchAll(/(?<![\w$])t\('([^']+)'/g),
     ].map((match) => match[1]);
     const dynamicKeys = [
-      'mail.status.applied',
-      'mail.status.invited',
-      'mail.status.visited',
-      'mail.status.documents_sent',
-      'mail.status.rejected',
-      'mail.status.accepted',
-      'mail.status.not_invited',
-      'mail.matchMethod.listing_code',
-      'mail.matchMethod.address',
-      'mail.matchMethod.thread',
-      'mail.matchMethod.manual',
+      'applicationHistory.event.status_changed',
+      'applicationHistory.event.appointment_created',
+      'applicationHistory.event.appointment_rescheduled',
+      'applicationHistory.event.appointment_cancelled',
+      'applicationHistory.event.appointment_updated',
+      'applicationHistory.event.suggestion_accepted',
+      'applicationHistory.event.suggestion_rejected',
     ];
-    const usedKeys = [...new Set([...directKeys, ...dynamicKeys, 'nav.mail'])];
+    const usedKeys = [...new Set([...directKeys, ...dynamicKeys, 'nav.aiIntegration'])];
 
-    expect(usedKeys.length).toBeGreaterThan(20);
+    expect(usedKeys.length).toBeGreaterThan(15);
     for (const file of localeFiles) {
       const translations = readLocale(file);
       for (const key of usedKeys) expect(translations).toHaveProperty(key);

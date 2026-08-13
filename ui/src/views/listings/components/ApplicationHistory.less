@@ -1,0 +1,55 @@
+@import '../../../tokens.less';
+
+.relatedMail {
+  margin-top: @space-5;
+  padding-top: @space-5;
+  border-top: 1px solid var(--semi-color-border);
+
+  &__title,
+  &__header,
+  &__identity {
+    display: flex;
+  }
+  &__title {
+    align-items: center;
+    gap: @space-2;
+    margin-bottom: @space-3;
+    h4 {
+      margin: 0;
+    }
+  }
+  &__header {
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: @space-3;
+  }
+  &__identity {
+    flex-direction: column;
+    min-width: 0;
+    gap: @space-1;
+    > span {
+      overflow-wrap: anywhere;
+    }
+  }
+  &__loading {
+    display: grid;
+    place-items: center;
+    min-height: 80px;
+  }
+  &__list {
+    display: grid;
+    gap: @space-2;
+  }
+  &__item {
+    padding: @space-3;
+    border: 1px solid @color-border;
+    border-radius: @radius-input;
+    background: @color-fill-subtle;
+  }
+
+  @media (max-width: 600px) {
+    &__header {
+      flex-direction: column;
+    }
+  }
+}

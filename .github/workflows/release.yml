@@ -25,7 +25,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version=$(node -p 'require("./package.json").version')
-          title="Fredy Mail & Application Tracking $version"
+          title="Fredy AI Application Tracking $version"
 
           if ! gh release view "$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             prerelease_flag=""

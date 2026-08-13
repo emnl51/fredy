@@ -20,15 +20,13 @@
   <img src="https://github.com/emnl51/fredy/actions/workflows/check_source.yml/badge.svg" alt="Source" />
 </p>
 
-
-
 # Fredy 🏡 - Your Self-Hosted Real Estate Finder for Germany
 
 > [!IMPORTANT]
 > This is an independently maintained fork of
 > [orangecoding/fredy](https://github.com/orangecoding/fredy). It continues to incorporate relevant
-> updates from the upstream project while developing a broader rental-application workflow around
-> incoming-mail management, mail-to-listing matching, application stages and appointment tracking.
+> updates from the upstream project while developing a broader, privacy-conscious rental-application
+> workflow around external AI agents, application stages and appointment tracking.
 > Development, releases, Docker images and update notifications for this edition are managed
 > through [emnl51/fredy](https://github.com/emnl51/fredy).
 
@@ -55,45 +53,47 @@ The map draws the **public transport network**, marks every stop, and tells you 
 there and when the next one leaves. See [Travel Time](#travel-time) and
 [Public Transport](#public-transport).
 
-------------------------------------------------------------------------
+---
 
 ## ✨ Key Features
 
--   🏠 Scrapes **ImmoScout24, Immowelt, Immonet, eBay Kleinanzeigen,
-    WG-Gesucht, InBerlinWohnen, Stadt und Land**
--   ⚡ Instant notifications: Slack, Telegram, Email (SendGrid,
-    Mailjet), ntfy, discord 
--   🔎 Uses the **ImmoScout Mobile API** (reverse engineered)
--   🌍 Runs anywhere: Docker, Node.js, self-hosted
--   🖥️ Intuitive **Web UI** to manage searches
--   🎯 Easy to use thanks to a user-friendly Web UI
--   🔄 Deduplication across platforms
--   ⏱️ Customizable search intervals
--   💶 Add your **personal financial situation** and see which listings you can actually
-    afford, for renting and for buying
--   ⏱️ Shows the **real travel time** from your addresses to every listing, by public
-    transport, car, bike or on foot, and filters listings by it
--   Makes **public transport visible**: the network on the map, live departures per stop,
-    and the nearest stops for every listing
--   📬 Synchronizes a personal **IMAP inbox** and keeps mailbox access scoped to each user
--   🔗 Automatically matches incoming landlord messages to listings, with manual assignment as a
-    fallback for ambiguous messages
--   📋 Tracks application stages from **Applied** through invitations, visits, documents and final
-    decisions
--   📅 Provides an **Appointments** view with invitation date/time, listing details, related mail
-    and an archive for completed visits
+- 🏠 Scrapes **ImmoScout24, Immowelt, Immonet, eBay Kleinanzeigen,
+  WG-Gesucht, InBerlinWohnen, Stadt und Land**
+- ⚡ Instant notifications: Slack, Telegram, Email (SendGrid,
+  Mailjet), ntfy, discord
+- 🔎 Uses the **ImmoScout Mobile API** (reverse engineered)
+- 🌍 Runs anywhere: Docker, Node.js, self-hosted
+- 🖥️ Intuitive **Web UI** to manage searches
+- 🎯 Easy to use thanks to a user-friendly Web UI
+- 🔄 Deduplication across platforms
+- ⏱️ Customizable search intervals
+- 💶 Add your **personal financial situation** and see which listings you can actually
+  afford, for renting and for buying
+- ⏱️ Shows the **real travel time** from your addresses to every listing, by public
+  transport, car, bike or on foot, and filters listings by it
+- Makes **public transport visible**: the network on the map, live departures per stop,
+  and the nearest stops for every listing
+- 🤖 Connects an external **Gmail/Outlook AI agent over scoped MCP** without storing mailbox
+  credentials or private correspondence in Fredy
+- 🔗 Lets the agent find likely listing matches and submit structured, idempotent suggestions for
+  human approval
+- 📋 Tracks application stages from **Applied** through invitations, visits, documents and final
+  decisions
+- 📅 Provides an **Appointments** view with invitation date/time, listing details, application
+  history and an archive for completed visits
 
-------------------------------------------------------------------------
+---
 
 ## 🤝 Sponsorship [![](https://img.shields.io/static/v1?label=Sponsor&message=❤&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/orangecoding)
 
 I maintain Fredy and other open-source projects in my free time, if you find it useful, consider supporting the project ❤️
 
-#### Support me on 
-[Ko-Fi](https://ko-fi.com/orangecoding) |  [Github](https://github.com/sponsors/orangecoding)
+#### Support me on
+
+[Ko-Fi](https://ko-fi.com/orangecoding) | [Github](https://github.com/sponsors/orangecoding)
 ----
 
-Fredy is proudly backed by the **JetBrains Open Source Support Program**.   
+Fredy is proudly backed by the **JetBrains Open Source Support Program**.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://www.jetbrains.com/company/brand/img/logo_jb_dos_3.svg">
@@ -101,7 +101,7 @@ Fredy is proudly backed by the **JetBrains Open Source Support Program**.
   <img alt="Jetbrains Open Source" src="https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg">
 </picture>
 
---------
+---
 
 Timetables, journey planning and travel times are provided by
 [Transitous](https://transitous.org/), a community-run [MOTIS](https://github.com/motis-project/motis)
@@ -114,12 +114,13 @@ pointing a large instance at it.
   <img alt="https://transitous.org/" src="https://transitous.org/images/logo-text.svg">
 </picture>
 
-------------------------------------------------------------------------
+---
 
 ## 👨‍🏫 Demo
+
 You can try out Fredy here: [Fredy Demo](https://fredy-demo.orange-coding.net/)
 
-------------------------------------------------------------------------
+---
 
 ## 🚀 Quick Start
 
@@ -128,7 +129,7 @@ You can try out Fredy here: [Fredy Demo](https://fredy-demo.orange-coding.net/)
 > [!NOTE]
 > No configuration file is needed to start. Fredy creates `/conf/config.json` on first run if it is missing. That file only holds the database path, everything else is configured in the Web UI and stored in the database.
 
-``` bash
+```bash
 docker run -d --name fredy \
   -v fredy_conf:/conf \
   -v fredy_db:/db \
@@ -138,16 +139,16 @@ docker run -d --name fredy \
 
 Logs:
 
-``` bash
+```bash
 docker logs fredy -f
 ```
 
 ### Manual (Node.js)
 
--   Requirement: **Node.js 22 or higher**
--   Install dependencies and start:
+- Requirement: **Node.js 22 or higher**
+- Install dependencies and start:
 
-``` bash
+```bash
 yarn
 yarn run build:frontend  # builds the Web UI into ui/public
 yarn run start:backend   # serves the UI and the API on port 9998
@@ -155,64 +156,46 @@ yarn run start:backend   # serves the UI and the API on port 9998
 
 👉 Open <http://localhost:9998>
 
-### Incoming mail privacy and credentials
+### AI application workflow
 
-The incoming-mail API encrypts saved IMAP credentials and private message presentation fields
-(sender name/address, subject and body) with AES-256-GCM. Set a stable 32-byte key before
-configuring an account or running a migration that contains existing mail:
+Fredy no longer connects to or mirrors a mailbox. A Gmail-, Outlook- or automation-platform agent
+uses the provider's OAuth integration, extracts only the minimum listing and event facts, and calls
+Fredy's MCP tools. Fredy stores listings, structured application stages, appointments, tasks and an
+audit trail—not mailbox credentials, message bodies or attachments.
 
-``` bash
-export FREDY_MAIL_ENCRYPTION_KEY="$(openssl rand -base64 32)"
-```
+Create a dedicated least-privilege token under **Settings → AI integration**. The recommended token
+can read jobs/listings and application context and create suggestions, but cannot directly change a
+status or appointment. Review every proposed change under **AI Suggestions**. See the
+[external AI agent guide](docs/ai-application-agent.md) for the complete contract, German event
+mapping and safety policy.
 
-For Docker Compose, store the key in the `.env` file beside `docker-compose.yml`:
+Use `ghcr.io/emnl51/fredy:ai-latest` for the latest tested AI/application release. Immutable tags
+such as `ghcr.io/emnl51/fredy:26.1.0-ai.1` remain available for pinning and rollback.
+`ghcr.io/emnl51/fredy:mail-latest` temporarily follows the same releases as an upgrade-compatibility
+alias. `ghcr.io/emnl51/fredy:master` is the latest development build and may change between releases.
 
-``` bash
-FREDY_MAIL_ENCRYPTION_KEY=replace-with-the-generated-value
-# Optional; the default checks enabled accounts every ten minutes.
-FREDY_MAIL_SYNC_CRON="*/10 * * * *"
-```
-
-Back up the key separately from the database and never place `.env` in the same backup archive as
-`db`. Protect both copies; losing the key makes saved credentials and message content
-unrecoverable. Mailbox connections are restricted to public IP
-addresses and standard IMAP ports (143 with mandatory STARTTLS, or 993 with direct TLS).
-
-Downloaded messages default to a 90-day retention period. Each user can select 30, 90, 180 or 365
-days under **Settings → Mailbox**, delete downloaded messages without deleting the account, or
-delete the account and all associated mail data. Listing application statuses are preserved when
-retention cleanup removes messages.
-
-Use `ghcr.io/emnl51/fredy:mail-latest` for the latest tested mail/application release. This rolling
-production tag advances only when a release is published, so `FREDY_IMAGE` does not need to change
-for every update. Immutable tags such as `ghcr.io/emnl51/fredy:26.0.0-mail.2` remain available for
-pinning and rollback. `ghcr.io/emnl51/fredy:master` is the latest development build and may change
-between releases.
-
-The current authentication mode is IMAP password/app-password. Gmail accounts should use an app
-password. Microsoft Exchange Online has disabled basic IMAP authentication and therefore requires
-a separately registered Microsoft Entra OAuth application; it is not supported by this fork's
-current mailbox setup. OAuth must not be represented by a manually stored short-lived access token:
-a future implementation needs an authorization-code flow, offline consent, encrypted refresh-token
-storage and provider-specific client registration.
+Upgrading from the old IMAP edition disables every saved mailbox account without deleting data.
+The owner can see the retained message/match count and explicitly delete the encrypted legacy data
+under **Settings → AI integration**. Application history is preserved.
 
 ### With Unraid
 
 Should you use [Unraid](https://unraid.net/), you can now install Fredy from the community store :)
 
 **Default Login:**
+
 - Username: `admin`
 - Password: `admin`
 
-------------------------------------------------------------------------
+---
 
 ## 📸 Screenshots
 
-| Fredy Maps View                                  | Dashboard                                               | Found Listings                                                              |
-|--------------------------------------------------|-----------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| Fredy Maps View                                  | Dashboard                                                             | Found Listings                                                     |
+| ------------------------------------------------ | --------------------------------------------------------------------- | ------------------------------------------------------------------ |
 | ![Screenshot showing Fredy](doc/screenshot1.png) | ![Screenshot showing job configuration in Fredy](doc/screenshot3.png) | ![Screenshot showing found listings in Fredy](doc/screenshot2.png) |
 
-------------------------------------------------------------------------
+---
 
 ## 🧩 Core Concepts
 
@@ -229,7 +212,7 @@ picks up the newest listings first.
 
 ### Notification adapter 📡
 
-An **adapter** is a *kind* of connection Fredy can send through (Slack,
+An **adapter** is a _kind_ of connection Fredy can send through (Slack,
 Telegram, Email, ntfy, discord ...).\
 Each adapter decides what it needs from you, for example an API key or a webhook URL.\
 You never configure an adapter on its own. You configure a **channel**, which is one
@@ -246,7 +229,7 @@ them at once. Several channels of the same type are fine, so "Telegram → famil
 "Telegram → work chat" can both be on the same search.
 
 Every channel belongs to whoever created it. An administrator can additionally share one with
-all users, or with other administrators only. Sharing lets other people *send* through a
+all users, or with other administrators only. Sharing lets other people _send_ through a
 channel, it never shows them its credentials. Anyone who wants their own variant can
 duplicate the channel and fill in their own.
 
@@ -263,12 +246,15 @@ where you can also restrict them to working hours.
 
 ### MCP Server 🤖
 
-Starting with **V20**, Fredy ships with a built-in **MCP Server**. This allows you to connect Fredy to LLMs (like Claude, ChatGPT, or local models via LM Studio) and query your real estate data using natural language.
-The local LLM can even enrich existing listings by checking the listing online.   
+Starting with **V20**, Fredy ships with a built-in **MCP Server**. This fork extends it with scoped,
+revocable tokens and an application workflow for external AI agents. An agent can query listings,
+find likely matches from minimal extracted facts, read current application context and submit an
+idempotent status/appointment/task suggestion for human approval. It cannot read a mailbox through
+Fredy and the proposal tool cannot directly mutate application state.
 
 For more information on how to set it up and use it, please refer to the [MCP Readme](lib/mcp/README.md).
 
-------------------------------------------------------------------------
+---
 
 ## 💶 Financing Calculator
 
@@ -328,7 +314,7 @@ mortgage answer or a rent answer depending on the listing.
 > defaults and Bundesländer change them from time to time, so check the figure for your state
 > and get a binding offer from your bank before committing to anything.
 
-------------------------------------------------------------------------
+---
 
 ## Travel Time
 
@@ -365,7 +351,7 @@ Two kinds of number, and Fredy always says which.
 **Estimated** is what the background sweep produces. Once per address, Fredy asks how long it takes
 to reach every stop in the region, then adds the walk from the closest one to the front door. That is
 one request per address no matter how many listings you have, which is what keeps this affordable on
-a service run by volunteers. Hover the *Estimated* chip and Fredy shows the stops it used, so you can
+a service run by volunteers. Hover the _Estimated_ chip and Fredy shows the stops it used, so you can
 check the number rather than take it on faith. Measured against exact routing across Berlin, it
 lands within a few minutes.
 
@@ -381,18 +367,18 @@ shown, so if a lookup fails you see exactly what you saw before.
 
 Sensible defaults, none of which need touching:
 
-| Setting | Default | What it does |
-|---|---|---|
-| `motisBaseUrl` | `https://api.transitous.org/api` | Point at your own MOTIS instance if you outgrow the public one. |
-| `travelTimeMaxMinutes` | `90` | How far the region-wide lookup reaches. Also the size dial. |
-| `travelTimeStreetLookupsPerRun` | `15` | Ceiling on street routings per sweep. `0` turns them off. |
-| `travelTimeLimitPerRun` | `500` | Listings one sweep works through. Not a request count. |
-| `travelTimeMaxAgeDays` | `30` | When a stored travel time is looked up again. |
+| Setting                         | Default                          | What it does                                                    |
+| ------------------------------- | -------------------------------- | --------------------------------------------------------------- |
+| `motisBaseUrl`                  | `https://api.transitous.org/api` | Point at your own MOTIS instance if you outgrow the public one. |
+| `travelTimeMaxMinutes`          | `90`                             | How far the region-wide lookup reaches. Also the size dial.     |
+| `travelTimeStreetLookupsPerRun` | `15`                             | Ceiling on street routings per sweep. `0` turns them off.       |
+| `travelTimeLimitPerRun`         | `500`                            | Listings one sweep works through. Not a request count.          |
+| `travelTimeMaxAgeDays`          | `30`                             | When a stored travel time is looked up again.                   |
 
 The sweep runs every two hours and never at startup. Street routing happens only where public
 transport cannot answer at all, where you asked for car or walking, and when you open a listing.
 
-------------------------------------------------------------------------
+---
 
 ## Public Transport
 
@@ -421,7 +407,7 @@ The marker popup on the map and the listing detail page both show the **three ne
 with their walking distance. Each one opens into the same departure board, so the question
 "how do I get to work from here" is answered on the listing itself.
 
-------------------------------------------------------------------------
+---
 
 ## Immoscout
 
@@ -450,14 +436,14 @@ Leave the field empty to disable. The proxy applies to all headless-browser prov
 
 Residential proxies are a paid service (usually billed per GB, Fredy's traffic is small). Well-known providers offering German residential IPs include:
 
-| Provider | Notes |
-|---|---|
-| [IPRoyal](https://iproyal.com) | Pay-as-you-go, no monthly minimum, good for low volume |
-| [Webshare](https://www.webshare.io) | Cheap entry tier, has a small free plan to test with |
-| [Decodo (formerly Smartproxy)](https://decodo.com) | Easy setup, country/city targeting |
-| [SOAX](https://soax.com) | Residential + mobile, fine-grained geo-targeting |
-| [Bright Data](https://brightdata.com) | Largest pool, most features, higher complexity/price |
-| [Oxylabs](https://oxylabs.io) | Enterprise-grade, larger plans |
+| Provider                                           | Notes                                                  |
+| -------------------------------------------------- | ------------------------------------------------------ |
+| [IPRoyal](https://iproyal.com)                     | Pay-as-you-go, no monthly minimum, good for low volume |
+| [Webshare](https://www.webshare.io)                | Cheap entry tier, has a small free plan to test with   |
+| [Decodo (formerly Smartproxy)](https://decodo.com) | Easy setup, country/city targeting                     |
+| [SOAX](https://soax.com)                           | Residential + mobile, fine-grained geo-targeting       |
+| [Bright Data](https://brightdata.com)              | Largest pool, most features, higher complexity/price   |
+| [Oxylabs](https://oxylabs.io)                      | Enterprise-grade, larger plans                         |
 
 This is not an endorsement, pick whatever fits your budget. For low-volume use like Fredy, a pay-as-you-go plan (e.g. IPRoyal) or a cheap entry tier (e.g. Webshare) is usually plenty. Make sure to select **Germany** as the proxy location and keep the search interval reasonable (the higher the interval, the less you look like a bot).
 
@@ -518,29 +504,36 @@ a debug bundle due to privacy reasons!
 
 ### Development Mode
 
-``` bash
+```bash
 yarn run start:backend:dev
 yarn run start:frontend:dev
 ```
+
 You should now be able to access _Fredy_ from your browser. Check your Terminal to see what port the frontend is running on.
 
 ### Run Tests
 
 ## "Online" tests
+
 These tests are directly executed against the actual providers.
-``` bash
+
+```bash
 yarn run test
 ```
 
 ## "Offline" tests
+
 These tests are using the test fixtures instead of the actual providers. Much faster and "good enough" to test the core functionality.
-``` bash
+
+```bash
 yarn run test:offline
 ```
 
 ## Download new fixtures
+
 If you have to refresh the fixtures (every once in a while needed because the providers change their code), run this command:
-``` bash
+
+```bash
 yarn run test:download-fixtures
 ```
 
@@ -549,6 +542,7 @@ yarn run test:download-fixtures
 Fredy's UI is fully multilingual. Translation files live in `ui/src/locales/`. To add a new language, create a single JSON file there, no code changes required.
 
 **Example: `ui/src/locales/fr.json`**
+
 ```json
 {
   "_meta": {
@@ -565,22 +559,22 @@ Fredy's UI is fully multilingual. Translation files live in `ui/src/locales/`. T
 
 The `_meta` fields:
 
-| Field | Description |
-|---|---|
-| `flag` | Unicode flag emoji shown in the language selector |
-| `name` | Display name shown in the language selector |
-| `locale` | BCP 47 locale string used for date and number formatting (e.g. `fr-FR`) |
+| Field        | Description                                                                     |
+| ------------ | ------------------------------------------------------------------------------- |
+| `flag`       | Unicode flag emoji shown in the language selector                               |
+| `name`       | Display name shown in the language selector                                     |
+| `locale`     | BCP 47 locale string used for date and number formatting (e.g. `fr-FR`)         |
 | `semiLocale` | Semi UI locale key for component-level strings (date pickers, pagination, etc.) |
 
 > **Important:** `semiLocale` must exactly match a locale filename from the Semi UI locale sources (without the `.js` extension). See the [available Semi UI locales on GitHub](https://github.com/DouyinFE/semi-design/tree/main/packages/semi-ui/locale/source) for the full list of supported keys.
 
 After adding the file, rebuild the frontend (`yarn build:frontend` or restart the dev server) and the new language will appear automatically in **Settings → Preferences → Language**.
 
-------------------------------------------------------------------------
+---
 
 ## 📐 Architecture
 
-``` mermaid
+```mermaid
 flowchart TD
  subgraph Jobs["Jobs"]
         A1["Job 1"]
@@ -608,8 +602,10 @@ flowchart TD
     E -- No --> F1 & F2
 ```
 
-------------------------------------------------------------------------
+---
+
 ## 🤖 Using AI such as Claude Code
+
 When I started building Fredy, LLMs were still basically the wet dream of a few nerdy scientists.
 
 Nowadays, it’s easier than ever to throw a prompt into the LLM of your choice and let 'the AI' build your stuff. I’m not against that. I use Claude Code myself for smaller tasks, and I do think these tools can be really useful.
@@ -622,7 +618,7 @@ I’ve had one too many PRs full of hallucinated bullshit.
 
 **Thanks ;)**
 
-------------------------------------------------------------------------
+---
 
 ## 👐 Contributing
 
@@ -634,7 +630,7 @@ See the [Contributing
 Guide](https://github.com/emnl51/fredy/blob/master/CONTRIBUTING.md). Contributions and issue reports
 for this edition should be directed to [emnl51/fredy](https://github.com/emnl51/fredy).
 
-------------------------------------------------------------------------
+---
 
 ## ⭐ Star History
 

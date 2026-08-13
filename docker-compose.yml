@@ -7,13 +7,11 @@ services:
     image: ${FREDY_IMAGE:-ghcr.io/emnl51/fredy:master}
     environment:
       - NODE_ENV=production
-      - FREDY_MAIL_ENCRYPTION_KEY=${FREDY_MAIL_ENCRYPTION_KEY:-}
-      - FREDY_MAIL_SYNC_CRON=${FREDY_MAIL_SYNC_CRON:-*/10 * * * *}
     volumes:
       - ./conf:/conf
       - ./db:/db
     ports:
-      - "9998:9998"
+      - '9998:9998'
     restart: unless-stopped
     # Resource limits to prevent runaway memory usage from Chromium
     deploy:
@@ -21,7 +19,7 @@ services:
         limits:
           memory: 1G
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "--max-time", "5", "http://localhost:9998/"]
+      test: ['CMD', 'curl', '--fail', '--silent', '--show-error', '--max-time', '5', 'http://localhost:9998/']
       interval: 120s
       timeout: 10s
       retries: 3
