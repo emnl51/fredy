@@ -41,8 +41,9 @@ jobs:
               $prerelease_flag
           fi
 
-          # Load the current workflow from master, but build the immutable release tag. This also
-          # advances the rolling production channel without moving old version tags.
+          # Load the current workflow and source from master. release_tag names the container
+          # image only, so an older Git tag cannot make the workflow rebuild stale source.
+          # This also advances the rolling production channel without moving old version tags.
           gh workflow run docker.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref master \
