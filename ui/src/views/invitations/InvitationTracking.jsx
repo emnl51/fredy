@@ -5,13 +5,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Card, Empty, Input, Space, Spin, Tag, Toast, Typography } from '@douyinfe/semi-ui-19';
-import { IconCalendarClock, IconExternalOpen, IconMailStroked, IconRefresh } from '@douyinfe/semi-icons';
+import { IconCalendarClock, IconExternalOpen, IconRefresh } from '@douyinfe/semi-icons';
 import { useNavigate } from 'react-router-dom';
 
 import Headline from '../../components/headline/Headline.jsx';
 import { useLocale, useTranslation } from '../../services/i18n/i18n.jsx';
 import { errorMessage } from '../../services/xhr.js';
-import { getInvitations, updateInvitationAppointment, updateMailListingStatus } from '../../services/mailClient.js';
+import {
+  getAppointments,
+  saveAppointment as saveApplicationAppointment,
+  setAppointmentState,
+  updateApplicationStatus,
+} from '../../services/applicationClient.js';
 
 import './InvitationTracking.less';
 
@@ -40,10 +45,10 @@ export default function InvitationTracking() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await getInvitations();
+      const result = await getAppointments(true);
       const rows = Array.isArray(result) ? result : [];
       setInvitations(rows);
-      setDrafts(Object.fromEntries(rows.map((item) => [item.id, toLocalInput(item.appointmentAt)])));
+      setDrafts(Object.fromEntries(rows.map((item) => [item.id, toLocalInput(item.startsAt)])));
     } catch (error) {
       Toast.error(errorMessage(error, t('invitations.loadError')));
     } finally {
@@ -61,10 +66,15 @@ export default function InvitationTracking() {
     [locale],
   );
 
-  const saveAppointment = async (listingId) => {
-    setBusy(`save:${listingId}`);
+  const saveAppointment = async (invitation) => {
+    setBusy(`save:${invitation.id}`);
     try {
-      await updateInvitationAppointment(listingId, fromLocalInput(drafts[listingId]));
+      await saveApplicationAppointment({
+        listingId: invitation.listingId,
+        startsAt: fromLocalInput(drafts[invitation.id]),
+        timezone: invitation.timezone || 'Europe/Berlin',
+        location: invitation.location || invitation.address || null,
+      });
       Toast.success(t('invitations.saved'));
       await load();
     } catch (error) {
@@ -74,10 +84,11 @@ export default function InvitationTracking() {
     }
   };
 
-  const markVisited = async (listingId) => {
-    setBusy(`visited:${listingId}`);
+  const markVisited = async (invitation) => {
+    setBusy(`visited:${invitation.id}`);
     try {
-      await updateMailListingStatus(listingId, 'visited');
+      await setAppointmentState(invitation.id, 'completed');
+      await updateApplicationStatus(invitation.listingId, 'visited');
       Toast.success(t('invitations.markedVisited'));
       await load();
     } catch (error) {
@@ -87,10 +98,11 @@ export default function InvitationTracking() {
     }
   };
 
-  const restoreInvitation = async (listingId) => {
-    setBusy(`restore:${listingId}`);
+  const restoreInvitation = async (invitation) => {
+    setBusy(`restore:${invitation.id}`);
     try {
-      await updateMailListingStatus(listingId, 'invited');
+      await setAppointmentState(invitation.id, 'scheduled');
+      await updateApplicationStatus(invitation.listingId, 'invited');
       Toast.success(t('invitations.restored'));
       await load();
     } catch (error) {
@@ -101,13 +113,13 @@ export default function InvitationTracking() {
   };
 
   const now = Date.now();
-  const isOverdue = (invitation) =>
-    invitation.status?.status === 'invited' && invitation.appointmentAt != null && invitation.appointmentAt < now;
+  const isUpcoming = (invitation) => ['scheduled', 'rescheduled'].includes(invitation.appointmentState);
+  const isOverdue = (invitation) => isUpcoming(invitation) && invitation.startsAt < now;
   const visibleInvitations = invitations.filter((invitation) => {
     if (view === 'all') return true;
-    if (view === 'visited') return invitation.status?.status === 'visited';
+    if (view === 'visited') return invitation.appointmentState === 'completed';
     if (view === 'overdue') return isOverdue(invitation);
-    return invitation.status?.status === 'invited' && !isOverdue(invitation);
+    return isUpcoming(invitation) && !isOverdue(invitation);
   });
 
   if (loading) {
@@ -143,14 +155,14 @@ export default function InvitationTracking() {
           type={view === 'upcoming' ? 'primary' : 'tertiary'}
           onClick={() => setView('upcoming')}
         >
-          {t('invitations.upcoming')} ({invitations.filter((item) => item.status?.status === 'invited').length})
+          {t('invitations.upcoming')} ({invitations.filter((item) => isUpcoming(item) && !isOverdue(item)).length})
         </Button>
         <Button
           theme={view === 'visited' ? 'solid' : 'light'}
           type={view === 'visited' ? 'primary' : 'tertiary'}
           onClick={() => setView('visited')}
         >
-          {t('invitations.visited')} ({invitations.filter((item) => item.status?.status === 'visited').length})
+          {t('invitations.visited')} ({invitations.filter((item) => item.appointmentState === 'completed').length})
         </Button>
         <Button
           theme={view === 'all' ? 'solid' : 'light'}
@@ -180,11 +192,11 @@ export default function InvitationTracking() {
                 <div className="invitationTracking__listingBody">
                   <div className="invitationTracking__heading">
                     <div>
-                      <Tag color={invitation.appointmentAt && invitation.appointmentAt < Date.now() ? 'grey' : 'blue'}>
+                      <Tag color={invitation.startsAt && invitation.startsAt < Date.now() ? 'grey' : 'blue'}>
                         <IconCalendarClock />{' '}
-                        {invitation.appointmentAt ? formatDate(invitation.appointmentAt) : t('invitations.dateMissing')}
+                        {invitation.startsAt ? formatDate(invitation.startsAt) : t('invitations.dateMissing')}
                       </Tag>
-                      {invitation.status?.status === 'visited' && (
+                      {invitation.appointmentState === 'completed' && (
                         <Tag color="green">{t('invitations.visitedBadge')}</Tag>
                       )}
                       {isOverdue(invitation) && <Tag color="red">{t('invitations.overdueBadge')}</Tag>}
@@ -194,7 +206,7 @@ export default function InvitationTracking() {
                       </Typography.Text>
                     </div>
                     <Space wrap>
-                      <Button onClick={() => navigate(`/listings/listing/${invitation.id}`)}>
+                      <Button onClick={() => navigate(`/listings/listing/${invitation.listingId}`)}>
                         {t('invitations.openInFredy')}
                       </Button>
                       {invitation.link && (
@@ -208,7 +220,7 @@ export default function InvitationTracking() {
                     </Space>
                   </div>
 
-                  {invitation.status?.status === 'invited' ? (
+                  {isUpcoming(invitation) ? (
                     <div className="invitationTracking__appointment">
                       <label htmlFor={`appointment-${invitation.id}`}>{t('invitations.appointment')}</label>
                       <Input
@@ -221,11 +233,11 @@ export default function InvitationTracking() {
                         theme="solid"
                         type="primary"
                         loading={busy === `save:${invitation.id}`}
-                        onClick={() => saveAppointment(invitation.id)}
+                        onClick={() => saveAppointment(invitation)}
                       >
                         {t('invitations.save')}
                       </Button>
-                      <Button loading={busy === `visited:${invitation.id}`} onClick={() => markVisited(invitation.id)}>
+                      <Button loading={busy === `visited:${invitation.id}`} onClick={() => markVisited(invitation)}>
                         {t('invitations.markVisited')}
                       </Button>
                     </div>
@@ -233,35 +245,13 @@ export default function InvitationTracking() {
                     <div className="invitationTracking__archiveActions">
                       <Button
                         loading={busy === `restore:${invitation.id}`}
-                        onClick={() => restoreInvitation(invitation.id)}
+                        onClick={() => restoreInvitation(invitation)}
                       >
                         {t('invitations.restore')}
                       </Button>
                     </div>
                   )}
                 </div>
-              </div>
-
-              <div className="invitationTracking__mails">
-                <Typography.Title heading={5}>
-                  <IconMailStroked /> {t('invitations.relatedMail', { count: invitation.messages.length })}
-                </Typography.Title>
-                {invitation.messages.length === 0 ? (
-                  <Typography.Text type="tertiary">{t('invitations.noMail')}</Typography.Text>
-                ) : (
-                  invitation.messages.map((message) => (
-                    <details key={message.id} className="invitationTracking__mail">
-                      <summary>
-                        <span>{message.subject || t('mail.noSubject')}</span>
-                        <small>{message.receivedAt ? formatDate(message.receivedAt) : ''}</small>
-                      </summary>
-                      <Typography.Text type="tertiary">
-                        {[message.senderName, message.senderAddress].filter(Boolean).join(' · ')}
-                      </Typography.Text>
-                      {message.textBody && <pre>{message.textBody}</pre>}
-                    </details>
-                  ))
-                )}
               </div>
             </Card>
           ))}
