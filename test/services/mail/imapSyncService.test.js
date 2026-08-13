@@ -33,7 +33,7 @@ vi.mock('mailparser', () => ({
   })),
 }));
 
-const { syncMailAccount } = await import('../../../lib/services/mail/imapSyncService.js');
+const { syncMailAccount, testMailConnection } = await import('../../../lib/services/mail/imapSyncService.js');
 const { simpleParser } = await import('mailparser');
 
 function createClient({ uids = [41], size = 500, uidValidity = 12 } = {}) {
@@ -81,6 +81,25 @@ beforeEach(() => {
 });
 
 describe('syncMailAccount', () => {
+  it('rejects an internal endpoint before creating a network client', async () => {
+    const clientFactory = vi.fn();
+
+    await expect(
+      testMailConnection(
+        {
+          host: '169.254.169.254',
+          port: 993,
+          secure: true,
+          username: 'user',
+          password: 'secret',
+          mailbox: 'INBOX',
+        },
+        { clientFactory },
+      ),
+    ).rejects.toMatchObject({ code: 'IMAP_ENDPOINT_BLOCKED' });
+    expect(clientFactory).not.toHaveBeenCalled();
+  });
+
   it('uses a bounded date search on first sync and stores plain-text messages', async () => {
     const client = createClient();
     const now = Date.parse('2026-08-12T12:00:00Z');
@@ -155,7 +174,7 @@ describe('syncMailAccount', () => {
     await expect(syncMailAccount('account-1', 'user-1', { clientFactory: () => client })).rejects.toThrow(
       'authentication failed',
     );
-    expect(storage.markMailSyncFailed).toHaveBeenCalledWith('account-1', 'authentication failed');
+    expect(storage.markMailSyncFailed).toHaveBeenCalledWith('account-1', 'IMAP authentication failed.');
   });
 
   it('shares one IMAP operation between concurrent sync requests', async () => {
