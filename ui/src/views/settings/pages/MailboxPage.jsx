@@ -4,13 +4,19 @@
  */
 
 import { useEffect, useMemo, useState } from 'react';
-import { Banner, Button, Input, InputNumber, Popconfirm, Spin, Switch, Toast, Typography } from '@douyinfe/semi-ui-19';
+import { Banner, Button, Input, Popconfirm, Select, Spin, Switch, Toast, Typography } from '@douyinfe/semi-ui-19';
 import { IconDelete, IconSave } from '@douyinfe/semi-icons';
 
 import { SegmentPart } from '../../../components/segment/SegmentPart.jsx';
 import { useLocale, useTranslation } from '../../../services/i18n/i18n.jsx';
 import { errorMessage } from '../../../services/xhr.js';
-import { deleteMailAccount, getMailAccount, saveMailAccount, testMailAccount } from '../../../services/mailClient.js';
+import {
+  deleteAllMailMessages,
+  deleteMailAccount,
+  getMailAccount,
+  saveMailAccount,
+  testMailAccount,
+} from '../../../services/mailClient.js';
 
 import './MailboxPage.less';
 
@@ -22,7 +28,11 @@ const DEFAULT_ACCOUNT = {
   password: '',
   mailbox: 'INBOX',
   enabled: true,
+  retentionDays: 90,
 };
+
+const PORT_OPTIONS = [993, 143].map((value) => ({ label: String(value), value }));
+const RETENTION_OPTIONS = [30, 90, 180, 365].map((value) => ({ label: String(value), value }));
 
 /**
  * Personal IMAP account configuration.
@@ -72,6 +82,7 @@ export default function MailboxPage() {
   };
 
   const updateAccount = (field, value) => setAccount((current) => ({ ...current, [field]: value }));
+  const updatePort = (port) => setAccount((current) => ({ ...current, port, secure: port === 993 }));
 
   const handleSave = async () => {
     const saved = await run(
@@ -84,6 +95,7 @@ export default function MailboxPage() {
           username: account.username,
           mailbox: account.mailbox,
           enabled: account.enabled,
+          retentionDays: Number(account.retentionDays),
           ...(account.password ? { password: account.password } : {}),
         }),
       'mail.saved',
@@ -102,6 +114,8 @@ export default function MailboxPage() {
       setAccount(DEFAULT_ACCOUNT);
     }
   };
+
+  const handleClearMessages = () => run('clear', deleteAllMailMessages, 'mail.messagesDeleted');
 
   if (loading) {
     return (
@@ -125,7 +139,7 @@ export default function MailboxPage() {
           </label>
           <label>
             <span>{t('mail.port')}</span>
-            <InputNumber min={1} max={65535} value={account.port} onChange={(value) => updateAccount('port', value)} />
+            <Select value={account.port} optionList={PORT_OPTIONS} onChange={updatePort} />
           </label>
           <label>
             <span>{t('mail.username')}</span>
@@ -147,6 +161,14 @@ export default function MailboxPage() {
           <label>
             <span>{t('mail.mailbox')}</span>
             <Input value={account.mailbox} onChange={(value) => updateAccount('mailbox', value)} />
+          </label>
+          <label>
+            <span>{t('mail.retentionDays')}</span>
+            <Select
+              value={account.retentionDays}
+              optionList={RETENTION_OPTIONS}
+              onChange={(value) => updateAccount('retentionDays', value)}
+            />
           </label>
           <div className="mailboxSettings__switches">
             <label>
@@ -186,6 +208,14 @@ export default function MailboxPage() {
             </Popconfirm>
           )}
         </div>
+      </SegmentPart>
+
+      <SegmentPart name={t('mail.dataTitle')} helpText={t('mail.dataHelp')}>
+        <Popconfirm title={t('mail.clearMessagesConfirm')} onConfirm={handleClearMessages}>
+          <Button type="danger" icon={<IconDelete />} loading={busy === 'clear'} disabled={!hasAccount}>
+            {t('mail.clearMessages')}
+          </Button>
+        </Popconfirm>
       </SegmentPart>
     </div>
   );

@@ -4,7 +4,12 @@
  */
 
 import { afterEach, describe, expect, it } from 'vitest';
-import { decryptMailCredential, encryptMailCredential } from '../../../lib/services/mail/mailCredentialCrypto.js';
+import {
+  decryptMailContent,
+  decryptMailCredential,
+  encryptMailContent,
+  encryptMailCredential,
+} from '../../../lib/services/mail/mailCredentialCrypto.js';
 
 const ENV_NAME = 'FREDY_MAIL_ENCRYPTION_KEY';
 const originalKey = process.env[ENV_NAME];
@@ -39,5 +44,21 @@ describe('mailCredentialCrypto', () => {
     parts[3] = `${parts[3].slice(0, -1)}${parts[3].endsWith('A') ? 'B' : 'A'}`;
 
     expect(() => decryptMailCredential(parts.join('.'))).toThrow('could not be decrypted');
+  });
+
+  it('encrypts private message fields with a domain-separated envelope', () => {
+    process.env[ENV_NAME] = Buffer.alloc(32, 9).toString('base64');
+    const content = {
+      senderName: 'Hausverwaltung',
+      senderAddress: 'private@example.com',
+      subject: 'Besichtigung',
+      textBody: 'Telefon: 030 123456',
+    };
+    const encrypted = encryptMailContent(content);
+
+    expect(encrypted).toMatch(/^v1c\./);
+    expect(encrypted).not.toContain('Hausverwaltung');
+    expect(decryptMailContent(encrypted)).toEqual(content);
+    expect(() => decryptMailCredential(encrypted)).toThrow('unsupported format');
   });
 });

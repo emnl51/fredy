@@ -141,10 +141,11 @@ yarn run start:backend   # serves the UI and the API on port 9998
 
 👉 Open <http://localhost:9998>
 
-### Incoming mail credentials
+### Incoming mail privacy and credentials
 
-The incoming-mail API encrypts every saved IMAP password. Set a stable 32-byte key before
-configuring an account:
+The incoming-mail API encrypts saved IMAP credentials and private message presentation fields
+(sender name/address, subject and body) with AES-256-GCM. Set a stable 32-byte key before
+configuring an account or running a migration that contains existing mail:
 
 ``` bash
 export FREDY_MAIL_ENCRYPTION_KEY="$(openssl rand -base64 32)"
@@ -158,9 +159,25 @@ FREDY_MAIL_ENCRYPTION_KEY=replace-with-the-generated-value
 FREDY_MAIL_SYNC_CRON="*/10 * * * *"
 ```
 
-Keep the key outside the database backup and do not rotate or lose it without first removing the
-saved IMAP account. The fork image is published as `ghcr.io/emnl51/fredy:master`; override it with
-`FREDY_IMAGE` when testing another tag.
+Back up the key separately from the database and never place `.env` in the same backup archive as
+`db`. Protect both copies; losing the key makes saved credentials and message content
+unrecoverable. Mailbox connections are restricted to public IP
+addresses and standard IMAP ports (143 with mandatory STARTTLS, or 993 with direct TLS).
+
+Downloaded messages default to a 90-day retention period. Each user can select 30, 90, 180 or 365
+days under **Settings → Mailbox**, delete downloaded messages without deleting the account, or
+delete the account and all associated mail data. Listing application statuses are preserved when
+retention cleanup removes messages.
+
+The fork image is published as `ghcr.io/emnl51/fredy:master`; override it with `FREDY_IMAGE` when
+testing another tag.
+
+The current authentication mode is IMAP password/app-password. Gmail accounts should use an app
+password. Microsoft Exchange Online has disabled basic IMAP authentication and therefore requires
+a separately registered Microsoft Entra OAuth application; it is not supported by this fork's
+current mailbox setup. OAuth must not be represented by a manually stored short-lived access token:
+a future implementation needs an authorization-code flow, offline consent, encrypted refresh-token
+storage and provider-specific client registration.
 
 ### With Unraid
 

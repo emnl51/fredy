@@ -36,22 +36,95 @@ vi.mock('../../lib/services/storage/SqliteConnection.js', () => ({ default: sqli
 
 const {
   assignMailMessageToListing,
+  deleteAllMailMessages,
   getEnabledMailAccountsForSync,
   getMatchedMailThreadAnchors,
   getMailMessagesForListing,
+  getMailMessages,
   getUnmatchedMailMessages,
   markMailSyncSuccessful,
   removeMailMessageListingMatch,
   searchOwnedListingsForMailAssignment,
+  purgeExpiredMailMessages,
+  storeMailMessage,
   upsertMailAccount,
 } = await import('../../lib/services/storage/mailStorage.js');
 
 beforeEach(() => {
+  process.env.FREDY_MAIL_ENCRYPTION_KEY = Buffer.alloc(32, 13).toString('base64');
   calls.length = 0;
   owned.message = true;
   owned.listing = true;
   mailAccount.row = null;
   vi.clearAllMocks();
+});
+
+describe('private mail storage', () => {
+  it('stores private presentation fields only in the encrypted envelope', async () => {
+    storeMailMessage({
+      accountId: 'account-1',
+      mailbox: 'INBOX',
+      uidValidity: '1',
+      uid: 10,
+      senderName: 'Agent',
+      senderAddress: 'agent@example.com',
+      subject: 'Besichtigung',
+      textBody: 'Private phone number',
+    });
+
+    const insert = calls.find((call) => /INSERT INTO mail_messages/.test(call.sql));
+    expect(insert.sql).toMatch(/content_encrypted/);
+    expect(insert.sql).not.toMatch(/sender_name/);
+    expect(insert.params).not.toHaveProperty('textBody');
+    expect(insert.params.contentEncrypted).toMatch(/^v1c\./);
+    const { decryptMailContent } = await import('../../lib/services/mail/mailCredentialCrypto.js');
+    expect(decryptMailContent(insert.params.contentEncrypted)).toEqual({
+      senderName: 'Agent',
+      senderAddress: 'agent@example.com',
+      subject: 'Besichtigung',
+      textBody: 'Private phone number',
+    });
+  });
+
+  it('decrypts private fields before returning messages to the user', async () => {
+    const { encryptMailContent } = await import('../../lib/services/mail/mailCredentialCrypto.js');
+    sqliteMock.query.mockReturnValueOnce([
+      {
+        id: 'message-1',
+        references_json: '[]',
+        content_encrypted: encryptMailContent({
+          senderName: 'Agent',
+          senderAddress: 'agent@example.com',
+          subject: 'Besichtigung',
+          textBody: 'Private body',
+        }),
+      },
+    ]);
+
+    const [message] = getMailMessages('user-1');
+
+    expect(message).toEqual(
+      expect.objectContaining({
+        senderName: 'Agent',
+        senderAddress: 'agent@example.com',
+        subject: 'Besichtigung',
+        textBody: 'Private body',
+      }),
+    );
+    expect(message).not.toHaveProperty('content_encrypted');
+  });
+
+  it('scopes bulk deletion to the requesting mailbox owner', () => {
+    expect(deleteAllMailMessages('user-1')).toBe(1);
+    expect(calls.at(-1).sql).toMatch(/user_id = @userId/);
+    expect(calls.at(-1).params).toEqual({ userId: 'user-1' });
+  });
+
+  it('purges messages using each account retention period', () => {
+    expect(purgeExpiredMailMessages(123456)).toBe(1);
+    expect(calls.at(-1).sql).toMatch(/a\.retention_days \* 86400000/);
+    expect(calls.at(-1).params).toEqual({ now: 123456 });
+  });
 });
 
 describe('mail account identity', () => {
