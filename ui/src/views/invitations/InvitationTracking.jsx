@@ -113,7 +113,9 @@ export default function InvitationTracking() {
   };
 
   const now = Date.now();
-  const isUpcoming = (invitation) => ['scheduled', 'rescheduled'].includes(invitation.appointmentState);
+  // A replacement appointment is inserted as `scheduled`; the superseded row is kept as
+  // `rescheduled` for the archive and must not appear as a second upcoming appointment.
+  const isUpcoming = (invitation) => invitation.appointmentState === 'scheduled';
   const isOverdue = (invitation) => isUpcoming(invitation) && invitation.startsAt < now;
   const visibleInvitations = invitations.filter((invitation) => {
     if (view === 'all') return true;

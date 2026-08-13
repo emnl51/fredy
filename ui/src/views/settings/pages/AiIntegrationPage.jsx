@@ -10,7 +10,13 @@ import { IconDelete } from '@douyinfe/semi-icons';
 import { SegmentPart } from '../../../components/segment/SegmentPart.jsx';
 import { useLocale, useTranslation } from '../../../services/i18n/i18n.jsx';
 import { errorMessage } from '../../../services/xhr.js';
-import { createMcpToken, getMcpTokens, revokeMcpToken } from '../../../services/mcpTokenClient.js';
+import {
+  createMcpToken,
+  deleteLegacyMailData,
+  getLegacyMailSummary,
+  getMcpTokens,
+  revokeMcpToken,
+} from '../../../services/mcpTokenClient.js';
 
 const RECOMMENDED_SCOPES = ['jobs:read', 'listings:read', 'applications:read', 'applications:propose'];
 const { Paragraph, Text, Title } = Typography;
@@ -22,6 +28,7 @@ export default function AiIntegrationPage() {
   const [name, setName] = useState('Inbox AI agent');
   const [issuedToken, setIssuedToken] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [legacyMail, setLegacyMail] = useState(null);
 
   const load = () =>
     getMcpTokens()
@@ -30,6 +37,9 @@ export default function AiIntegrationPage() {
 
   useEffect(() => {
     load();
+    getLegacyMailSummary()
+      .then(setLegacyMail)
+      .catch(() => {});
   }, []);
 
   const issue = async () => {
@@ -121,6 +131,31 @@ export default function AiIntegrationPage() {
           </Space>
         )}
       </SegmentPart>
+      {legacyMail?.retained && (
+        <SegmentPart name={t('aiIntegration.legacyMailTitle')} helpText={t('aiIntegration.legacyMailHelp')}>
+          <Paragraph>
+            {t('aiIntegration.legacyMailSummary', {
+              username: legacyMail.account.username,
+              count: legacyMail.messageCount,
+              matches: legacyMail.matchCount,
+            })}
+          </Paragraph>
+          <Popconfirm
+            title={t('aiIntegration.legacyMailDeleteConfirm')}
+            onConfirm={async () => {
+              try {
+                await deleteLegacyMailData();
+                setLegacyMail({ retained: false });
+                Toast.success(t('aiIntegration.legacyMailDeleted'));
+              } catch (error) {
+                Toast.error(errorMessage(error, t('aiIntegration.legacyMailDeleteError')));
+              }
+            }}
+          >
+            <Button type="danger">{t('aiIntegration.legacyMailDelete')}</Button>
+          </Popconfirm>
+        </SegmentPart>
+      )}
     </div>
   );
 }

@@ -3,7 +3,7 @@
  * Licensed under Apache-2.0 with Commons Clause and Attribution/Naming Clause
  */
 
-import { IconHome, IconMapPin, IconListView, IconBell, IconMailStroked, IconKey } from '@douyinfe/semi-icons';
+import { IconHome, IconMapPin, IconListView, IconBell, IconKey } from '@douyinfe/semi-icons';
 
 import SettingsShell from '../../components/settingsShell/SettingsShell.jsx';
 import { useTranslation } from '../../services/i18n/i18n.jsx';
@@ -26,7 +26,6 @@ export default function SettingsLayout() {
     { path: '/settings/listings', label: t('settings.tabListingDetails'), icon: <IconListView size="small" /> },
     { path: '/settings/notifications', label: t('settings.tabNotifications'), icon: <IconBell size="small" /> },
     { path: '/settings/ai-integration', label: t('settings.tabAiIntegration'), icon: <IconKey size="small" /> },
-    { path: '/settings/mailbox', label: t('settings.tabMailbox'), icon: <IconMailStroked size="small" /> },
   ];
 
   return <SettingsShell title={t('settings.title')} tabs={tabs} />;

@@ -12,7 +12,6 @@ import PreferencesPage from './views/settings/pages/PreferencesPage';
 import TravelTimePage from './views/settings/pages/TravelTimePage';
 import ListingDetailsPage from './views/settings/pages/ListingDetailsPage';
 import NotificationsPage from './views/settings/pages/NotificationsPage';
-import MailboxPage from './views/settings/pages/MailboxPage';
 import AiIntegrationPage from './views/settings/pages/AiIntegrationPage';
 import AdminLayout from './views/admin/AdminLayout';
 import SystemPage from './views/admin/pages/SystemPage';
@@ -40,7 +39,6 @@ import FredyFooter from './components/footer/FredyFooter.jsx';
 import WatchlistManagement from './views/listings/management/WatchlistManagement.jsx';
 import Dashboard from './views/dashboard/Dashboard.jsx';
 import FinanceCalculator from './views/finance/FinanceCalculator.jsx';
-import MailInbox from './views/mail/MailInbox.jsx';
 import InvitationTracking from './views/invitations/InvitationTracking.jsx';
 import AutomationSuggestions from './views/automation/AutomationSuggestions.jsx';
 import ListingDetail from './views/listings/ListingDetail.jsx';
@@ -209,7 +207,7 @@ export default function FredyApp() {
                   <Route path="/listings/listing/:listingId" element={<ListingDetail />} />
                   <Route path="/map" element={<MapView />} />
                   <Route path="/finance" element={<FinanceCalculator />} />
-                  <Route path="/mail" element={<MailInbox />} />
+                  <Route path="/mail" element={<Navigate to="/automation" replace />} />
                   <Route path="/invitations" element={<InvitationTracking />} />
                   <Route path="/automation" element={<AutomationSuggestions />} />
                   <Route path="/watchlistManagement" element={<WatchlistManagement />} />
@@ -225,7 +223,7 @@ export default function FredyApp() {
                     <Route path="listings" element={<ListingDetailsPage />} />
                     <Route path="notifications" element={<NotificationsPage />} />
                     <Route path="ai-integration" element={<AiIntegrationPage />} />
-                    <Route path="mailbox" element={<MailboxPage />} />
+                    <Route path="mailbox" element={<Navigate to="/settings/ai-integration" replace />} />
                   </Route>
 
                   {/* Settings that belong to the instance. Guarded once, at the parent, so a new

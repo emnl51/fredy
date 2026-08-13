@@ -11,7 +11,6 @@ import {
   IconTerminal,
   IconHistogram,
   IconCalendarClock,
-  IconMailStroked,
   IconSidebar,
   IconServerStroked,
 } from '@douyinfe/semi-icons';
@@ -60,7 +59,6 @@ export default function Navigation({ isAdmin }) {
     },
     { itemKey: '/finance', text: t('nav.finance'), icon: <IconEuro /> },
     { itemKey: '/automation', text: t('nav.automation'), icon: <IconStar /> },
-    { itemKey: '/mail', text: t('nav.mail'), icon: <IconMailStroked /> },
     { itemKey: '/invitations', text: t('nav.invitations'), icon: <IconCalendarClock /> },
   ];
 

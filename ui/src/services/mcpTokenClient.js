@@ -10,3 +10,5 @@ const json = (response) => response.json;
 export const getMcpTokens = () => xhrGet('/api/mcp-tokens').then(json);
 export const createMcpToken = (payload) => xhrPost('/api/mcp-tokens', payload).then(json);
 export const revokeMcpToken = (tokenId) => xhrDelete(`/api/mcp-tokens/${encodeURIComponent(tokenId)}`).then(json);
+export const getLegacyMailSummary = () => xhrGet('/api/legacy-mail').then(json);
+export const deleteLegacyMailData = () => xhrDelete('/api/legacy-mail', { confirmation: 'DELETE' }).then(json);

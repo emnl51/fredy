@@ -58,7 +58,7 @@ import PriceHistoryChart from './components/PriceHistoryChart.jsx';
 import NearbyStops from '../../components/transit/NearbyStops.jsx';
 import TravelTimes from '../../components/transit/TravelTimes.jsx';
 import AddressEditor from './components/AddressEditor.jsx';
-import RelatedMailList from './components/RelatedMailList.jsx';
+import ApplicationHistory from './components/ApplicationHistory.jsx';
 import './ListingDetail.less';
 import { useTranslation, useLocale } from '../../services/i18n/i18n.jsx';
 import { useFinanceProfile } from '../../hooks/useFinanceProfile.js';
@@ -667,7 +667,7 @@ export default function ListingDetail() {
                   after the price - so it comes before the sales copy, not after it. */}
               <ListingFinanceCard listing={listing} />
 
-              <RelatedMailList listingId={listing.id} />
+              <ApplicationHistory listingId={listing.id} />
 
               {/* Without the matching half of the profile there is nothing to compute, so offer
                   the way to create it instead of hiding the feature completely. */}
