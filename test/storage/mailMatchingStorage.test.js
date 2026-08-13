@@ -308,6 +308,39 @@ describe('mail matching storage ownership', () => {
     );
   });
 
+  it('stores an automatically extracted viewing appointment', () => {
+    assignMailMessageToListing({
+      messageId: 'message-1',
+      listingId: 'listing-1',
+      userId: 'user-1',
+      method: 'listing_code',
+      confidence: 100,
+      status: 'invited',
+      appointmentAt: 400,
+      automatic: true,
+    });
+
+    const statusCall = calls.find((call) => /UPDATE listings SET status/.test(call.sql));
+    expect(JSON.parse(statusCall.params.status)).toEqual(
+      expect.objectContaining({ status: 'invited', appointmentAt: 400 }),
+    );
+  });
+
+  it('does not let a later automatic confirmation downgrade an invitation', () => {
+    assignMailMessageToListing({
+      messageId: 'message-1',
+      listingId: 'listing-1',
+      userId: 'user-1',
+      method: 'thread',
+      confidence: 95,
+      status: 'applied',
+      automatic: true,
+    });
+
+    expect(calls.some((call) => /UPDATE listings SET status/.test(call.sql))).toBe(false);
+    expect(calls.some((call) => /INSERT INTO mail_message_listing_matches/.test(call.sql))).toBe(true);
+  });
+
   it('updates an invitation appointment without replacing its status timestamp', () => {
     expect(setInvitationAppointment('user-1', 'listing-1', 300)).toBe(true);
     const update = calls.find((call) => /UPDATE listings SET status/.test(call.sql));

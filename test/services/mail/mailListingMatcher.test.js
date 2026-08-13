@@ -7,6 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   extractListingCodes,
   extractAddressVariants,
+  inferGermanApplicationUpdate,
   matchUnmatchedMailMessages,
   normalizeMailMatchText,
   normalizeMatchableAddress,
@@ -71,8 +72,72 @@ describe('matchUnmatchedMailMessages', () => {
       userId: 'user-1',
       method: 'listing_code',
       confidence: 100,
+      automatic: true,
     });
     expect(result).toEqual({ processed: 1, matched: 1, ambiguous: 0 });
+  });
+
+  it('matches a slash-formatted Objektnummer from the listing hash and marks the application', async () => {
+    const assign = vi.fn(() => true);
+    await matchUnmatchedMailMessages('user-1', {
+      messages: [
+        {
+          id: 'gewobag-confirmation',
+          subject: 'Anfragebestätigung – Objektnummer "1000/00191/0101/0002"',
+          textBody:
+            'Wir freuen uns über Ihre Anfrage. Greifswalder Str. 87, 10409 Berlin. Objektnummer: 1000/00191/0101/0002',
+        },
+      ],
+      listings: [
+        {
+          id: 'gewobag-listing',
+          hash: '1000/00191/0101/0002',
+          link: 'https://example.com/object',
+          address: 'Greifswalder Straße 87, 10409 Berlin',
+        },
+      ],
+      assign,
+    });
+
+    expect(assign).toHaveBeenCalledWith(
+      expect.objectContaining({
+        listingId: 'gewobag-listing',
+        method: 'listing_code',
+        status: 'applied',
+        automatic: true,
+      }),
+    );
+  });
+
+  it('recognizes a household self-disclosure request as an application update', async () => {
+    expect(
+      inferGermanApplicationUpdate(
+        'Ihr Interesse Egon-Erwin-Kisch-Str. 1, 13059 Berlin',
+        'Um Ihre Anfrage weiter bearbeiten zu können, bitten wir Sie, weitere Informationen zu Ihrem Haushalt hochzuladen.',
+      ),
+    ).toEqual({ status: 'applied' });
+  });
+
+  it('recognizes a German document request without treating generic mail as documents sent', async () => {
+    expect(
+      inferGermanApplicationUpdate(
+        'Neue Nachricht – Objektnummer 1000/00185/0101/0218',
+        'Bitte verwenden Sie das Formular, um folgende Unterlagen hochzuladen: Einkommen, Schufa, Mietschuldenfreiheit.',
+      ),
+    ).toEqual({ status: 'documents_sent' });
+    expect(inferGermanApplicationUpdate('Unterlagen zu Ihrer Information', 'Vielen Dank.')).toBeNull();
+  });
+
+  it('extracts the viewing date and time from a German Terminbestätigung', async () => {
+    const update = inferGermanApplicationUpdate(
+      'Terminbestätigung – Objektnummer 1000/00185/0101/0218',
+      'Der Termin für das Objekt findet am 11.08.2026 um 13:30 Uhr statt.',
+    );
+
+    expect(update).toEqual({
+      status: 'invited',
+      appointmentAt: new Date(2026, 7, 11, 13, 30).getTime(),
+    });
   });
 
   it('matches a reference number embedded in a typical German reply', async () => {
