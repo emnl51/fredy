@@ -10,6 +10,7 @@ on:
       - .github/workflows/release.yml
 
 permissions:
+  actions: write
   contents: write
 
 jobs:
@@ -26,19 +27,18 @@ jobs:
           version=$(node -p 'require("./package.json").version')
           title="Fredy Mail & Application Tracking $version"
 
-          if gh release view "$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $version already exists."
-            exit 0
+          if ! gh release view "$version" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            prerelease_flag=""
+            if [[ "$version" == *-* ]]; then
+              prerelease_flag="--prerelease"
+            fi
+
+            gh release create "$version" \
+              --repo "$GITHUB_REPOSITORY" \
+              --target "$GITHUB_SHA" \
+              --title "$title" \
+              --generate-notes \
+              $prerelease_flag
           fi
 
-          prerelease_flag=""
-          if [[ "$version" == *-* ]]; then
-            prerelease_flag="--prerelease"
-          fi
-
-          gh release create "$version" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "$title" \
-            --generate-notes \
-            $prerelease_flag
+          gh workflow run docker.yml --repo "$GITHUB_REPOSITORY" --ref "$version"
