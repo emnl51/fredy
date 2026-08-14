@@ -160,12 +160,13 @@ yarn run start:backend   # serves the UI and the API on port 9998
 
 Fredy no longer connects to or mirrors a mailbox. A Gmail-, Outlook- or automation-platform agent
 uses the provider's OAuth integration, extracts only the minimum listing and event facts, and calls
-Fredy's MCP tools. Fredy stores listings, structured application stages, appointments, tasks and an
+Fredy's AI automation HTTP API (or MCP from compatible clients). Fredy stores listings, structured application stages, appointments, tasks and an
 audit trail—not mailbox credentials, message bodies or attachments.
 
 Create a dedicated least-privilege token under **Settings → AI integration**. The recommended token
-can read jobs/listings and application context and create suggestions, but cannot directly change a
-status or appointment. Review every proposed change under **AI Suggestions**. See the
+can read listings and application context and create suggestions, but cannot directly change a
+status or appointment. Review every proposed change under **AI Suggestions**. The HTTP API rejects
+mail bodies, headers and attachments; only structured facts can reach Fredy. See the
 [external AI agent guide](docs/ai-application-agent.md) for the complete contract, German event
 mapping and safety policy.
 
