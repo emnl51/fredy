@@ -6,7 +6,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Card, Empty, Input, Space, Spin, Tag, Toast, Typography } from '@douyinfe/semi-ui-19';
 import { IconCalendarClock, IconExternalOpen, IconRefresh } from '@douyinfe/semi-icons';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 
 import Headline from '../../components/headline/Headline.jsx';
 import { useLocale, useTranslation } from '../../services/i18n/i18n.jsx';
